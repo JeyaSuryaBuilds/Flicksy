@@ -1,0 +1,176 @@
+.wrap {
+  padding: 6px 22px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.title {
+  font-size: 20px;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cancelBtn {
+  background: none;
+  border: none;
+  color: var(--color-muted);
+  font-size: 12.5px;
+}
+
+.uploadBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 340px;
+  border-radius: 22px;
+  border: 1.5px dashed var(--color-border);
+  color: var(--color-muted);
+  font-size: 13.5px;
+  cursor: pointer;
+  background: var(--color-card);
+  margin-top: 18px;
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 9 / 14;
+  border-radius: 22px;
+  overflow: hidden;
+  background: #000;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.stageMedia {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.drawLayer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.textOverlay {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.toolRow {
+  display: flex;
+  gap: 8px;
+}
+
+.tool,
+.toolActive {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border-radius: 16px;
+  font-size: 12.5px;
+  border: 1px solid var(--color-border);
+  background: var(--color-card);
+  color: var(--color-cream);
+}
+
+.toolActive {
+  border-color: var(--color-coral);
+  color: var(--color-coral);
+  background: var(--color-coral-soft);
+}
+
+.colorRow,
+.emojiRow {
+  display: flex;
+  gap: 8px;
+}
+
+.colorSwatch,
+.colorSwatchActive {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border);
+}
+
+.colorSwatchActive {
+  border-color: var(--color-cream);
+}
+
+.emojiBtn {
+  font-size: 20px;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  width: 40px;
+  height: 40px;
+}
+
+.filterRow {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.filterChip,
+.filterChipActive {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border-radius: 16px;
+  font-size: 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-input);
+  color: var(--color-muted);
+}
+
+.filterChipActive {
+  border-color: var(--color-coral);
+  color: var(--color-coral);
+  background: var(--color-coral-soft);
+}
+
+.captionInput {
+  background: var(--color-input);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  color: var(--color-cream);
+  outline: none;
+  font-size: 13.5px;
+}
+
+.privacyRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--color-muted);
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+}

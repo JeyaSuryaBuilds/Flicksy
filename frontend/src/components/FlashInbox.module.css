@@ -1,0 +1,43 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 4px;
+  background: none;
+  border: none;
+  text-align: left;
+}
+
+.row:hover {
+  background: var(--color-input);
+  border-radius: var(--radius-sm);
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-cream);
+}
+
+.statusNew {
+  font-size: 11.5px;
+  color: var(--color-coral);
+  font-weight: 600;
+}
+
+.statusSeen {
+  font-size: 11.5px;
+  color: var(--color-muted);
+}

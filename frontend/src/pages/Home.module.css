@@ -1,0 +1,22 @@
+.stories {
+  display: flex;
+  gap: 16px;
+  padding: 6px 22px 18px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+.stories::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.sentinel {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
+}

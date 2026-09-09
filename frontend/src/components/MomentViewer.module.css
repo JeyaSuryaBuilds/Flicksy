@@ -1,0 +1,117 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 800;
+  display: flex;
+  flex-direction: column;
+}
+
+.progressRow {
+  display: flex;
+  gap: 4px;
+  padding: 10px 12px 0;
+}
+
+.progressTrack {
+  flex: 1;
+  height: 2.5px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: #fff;
+  transition: width 0.05s linear;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.username {
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.closeBtn {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mediaArea {
+  flex: 1;
+  position: relative;
+  display: flex;
+}
+
+.placeholderMedia {
+  flex: 1;
+  background: linear-gradient(160deg, #2a2118, #1a1712 55%, #241c16);
+}
+
+.realMedia {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.drawLayer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.textOverlay {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.tapZoneLeft,
+.tapZoneRight {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 35%;
+  background: none;
+  border: none;
+  z-index: 2;
+}
+
+.tapZoneLeft {
+  left: 0;
+}
+
+.tapZoneRight {
+  right: 0;
+}
+
+.navHintLeft {
+  display: none;
+}

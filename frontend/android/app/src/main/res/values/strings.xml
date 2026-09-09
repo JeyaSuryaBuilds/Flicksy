@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Flicksy</string>
+    <string name="title_activity_main">Flicksy</string>
+    <string name="package_name">com.flicksy.app</string>
+    <string name="custom_url_scheme">com.flicksy.app</string>
+</resources>

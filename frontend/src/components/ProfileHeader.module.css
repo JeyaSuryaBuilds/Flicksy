@@ -1,0 +1,78 @@
+.wrap {
+  padding: 20px 22px 8px;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 16px;
+}
+
+.stats {
+  display: flex;
+  flex: 1;
+  justify-content: space-around;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.statNum {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 17px;
+}
+
+.statLabel {
+  font-size: 11.5px;
+  color: var(--color-muted);
+}
+
+.name {
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.badgeInline {
+  margin-left: 6px;
+  flex-shrink: 0;
+}
+
+.pronouns {
+  font-size: 12.5px;
+  color: var(--color-muted);
+  font-weight: 400;
+}
+
+.website {
+  display: block;
+  font-size: 13px;
+  color: var(--color-coral);
+  margin-top: 6px;
+}
+
+.username {
+  font-size: 13px;
+  color: var(--color-muted);
+  margin-top: 2px;
+}
+
+.bio {
+  font-size: 13.5px;
+  line-height: 1.5;
+  margin-top: 10px;
+  color: var(--color-cream);
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}

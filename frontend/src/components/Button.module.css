@@ -1,0 +1,41 @@
+.btn {
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 17px 20px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15.5px;
+  letter-spacing: 0.2px;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+.primary {
+  background: var(--color-coral);
+  color: #15130f;
+  box-shadow: var(--shadow-coral);
+}
+
+.secondary {
+  background: var(--color-card);
+  color: var(--color-cream);
+  border: 1px solid var(--color-border);
+}
+
+.ghost {
+  background: transparent;
+  color: var(--color-coral);
+  padding: 12px 16px;
+}

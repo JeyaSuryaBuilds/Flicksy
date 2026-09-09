@@ -1,0 +1,79 @@
+.topSpace {
+  height: 12px;
+}
+
+.wordmark {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  margin-bottom: 40px;
+}
+
+.wordmark span {
+  color: var(--color-coral);
+}
+
+.heading {
+  font-size: 26px;
+  line-height: 1.25;
+}
+
+.subheading {
+  margin-top: 10px;
+  color: var(--color-muted);
+  font-size: 14px;
+  line-height: 1.6;
+  max-width: 300px;
+}
+
+.form {
+  margin-top: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.formError {
+  font-size: 13px;
+  color: #e08a83;
+  background: rgba(217, 83, 79, 0.12);
+  border: 1px solid rgba(217, 83, 79, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+}
+
+.forgotRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -6px;
+}
+
+.forgotLink {
+  font-size: 13px;
+  color: var(--color-coral);
+  font-weight: 500;
+}
+
+.demoBtn {
+  background: none;
+  border: 1px dashed var(--color-border);
+  color: var(--color-muted);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  font-size: 13px;
+}
+
+.bottomArea {
+  margin-top: auto;
+  padding-top: 28px;
+  text-align: center;
+}
+
+.switchText {
+  font-size: 14px;
+  color: var(--color-muted);
+}
+
+.switchText b {
+  color: var(--color-cream);
+}

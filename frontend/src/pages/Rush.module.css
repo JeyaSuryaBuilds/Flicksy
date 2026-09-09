@@ -1,0 +1,429 @@
+.page {
+  width: 100%;
+  height: calc(100dvh - 90px);
+  min-height: 0;
+
+  position: relative;
+  overflow: hidden;
+
+  background: #000;
+}
+
+/* Desktop */
+@media (min-width: 768px) {
+  .page {
+    height: calc(100dvh - 48px);
+
+    border-radius: 24px;
+    overflow: hidden;
+  }
+}
+
+/* =========================================================
+   RUSH FEED
+   ========================================================= */
+
+.feed {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  /* One Rush per viewport */
+  scroll-snap-type: y mandatory;
+  scroll-snap-stop: always;
+
+  /* Smooth wheel/touch scrolling */
+  scroll-behavior: smooth;
+
+  /* Mobile momentum scrolling */
+  -webkit-overflow-scrolling: touch;
+
+  /* Allow vertical touch gestures */
+  touch-action: pan-y;
+
+  /* Prevent the page behind Rush from scrolling */
+  overscroll-behavior-y: contain;
+
+  /* Hide scrollbar */
+  scrollbar-width: none;
+}
+
+.feed::-webkit-scrollbar {
+  display: none;
+}
+
+/* =========================================================
+   EACH RUSH
+   ========================================================= */
+
+.slide {
+  position: relative;
+
+  width: 100%;
+
+  /*
+   * Use viewport-sized slides so every Rush occupies
+   * exactly one visible Rush screen.
+   */
+  height: 100%;
+  min-height: 100%;
+
+  /*
+   * Prevent flex/grid parents from shrinking the slide.
+   */
+  flex-shrink: 0;
+
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+
+  background: #000;
+
+  overflow: hidden;
+}
+
+/* =========================================================
+   MEDIA AREA
+   ========================================================= */
+
+.mediaArea {
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #000;
+
+  z-index: 0;
+
+  overflow: hidden;
+}
+
+/*
+ * Actual Rush image/video.
+ *
+ * contain preserves the original aspect ratio and prevents
+ * the UI from cropping the uploaded media.
+ */
+.rushMedia {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+  object-position: center;
+
+  background: #000;
+
+  /*
+   * Do not allow browser dragging/selecting media.
+   */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+}
+
+/*
+ * Video itself should not steal the tap that controls
+ * mute/unmute on the media area.
+ */
+.mediaArea video {
+  pointer-events: none;
+}
+
+/*
+ * Images should not be draggable.
+ */
+.mediaArea img {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* =========================================================
+   FALLBACK MEDIA
+   ========================================================= */
+
+.placeholderMedia {
+  width: 100%;
+  height: 100%;
+
+  background: linear-gradient(
+    165deg,
+    #2a2118,
+    #14110d 55%,
+    #1e1712
+  );
+}
+
+/* =========================================================
+   MUTE HINT
+   ========================================================= */
+
+.muteHint {
+  position: absolute;
+
+  top: 16px;
+  left: 50%;
+
+  transform: translateX(-50%);
+
+  z-index: 3;
+
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+
+  font-size: 11.5px;
+  line-height: 1;
+
+  padding: 7px 12px;
+
+  border-radius: 12px;
+
+  pointer-events: none;
+
+  white-space: nowrap;
+}
+
+/* =========================================================
+   TOP OVERLAY
+   ========================================================= */
+
+.topOverlay {
+  position: absolute;
+
+  top: 14px;
+  left: 16px;
+
+  z-index: 2;
+
+  pointer-events: none;
+}
+
+.rushLabel {
+  font-family: var(--font-display);
+  font-weight: 700;
+
+  color: #fff;
+
+  font-size: 15px;
+
+  text-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* =========================================================
+   BOTTOM USER / CAPTION
+   ========================================================= */
+
+.bottomOverlay {
+  position: absolute;
+
+  left: 16px;
+  right: 90px;
+  bottom: 24px;
+
+  z-index: 2;
+}
+
+.userRow {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  text-decoration: none;
+
+  width: fit-content;
+}
+
+.username {
+  display: flex;
+  align-items: center;
+
+  gap: 5px;
+
+  color: #fff;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  text-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+.caption {
+  color: #fff;
+
+  font-size: 13.5px;
+  line-height: 1.5;
+
+  margin-top: 8px;
+  margin-bottom: 0;
+
+  text-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.5);
+
+  overflow-wrap: anywhere;
+}
+
+/* =========================================================
+   ACTION RAIL
+   ========================================================= */
+
+.actionsRail {
+  position: absolute;
+
+  right: 12px;
+  bottom: 24px;
+
+  z-index: 3;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  gap: 18px;
+}
+
+.actionBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 4px;
+
+  min-width: 42px;
+  min-height: 42px;
+
+  padding: 4px;
+
+  background: none;
+  border: none;
+
+  color: #fff;
+
+  font-size: 10.5px;
+  line-height: 1.2;
+
+  text-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.5);
+
+  cursor: pointer;
+
+  touch-action: manipulation;
+
+  -webkit-tap-highlight-color: transparent;
+}
+
+.actionBtn:active {
+  transform: scale(0.94);
+}
+
+.actionBtn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+  border-radius: 10px;
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 767px) {
+  .page {
+    height: calc(100dvh - 90px);
+
+    /*
+     * Prevent horizontal movement caused by media/overlays.
+     */
+    overflow: hidden;
+  }
+
+  .feed {
+    height: 100%;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    scroll-snap-type: y mandatory;
+    scroll-snap-stop: always;
+
+    touch-action: pan-y;
+    overscroll-behavior-y: contain;
+
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .slide {
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
+  .bottomOverlay {
+    left: 16px;
+    right: 82px;
+    bottom: max(20px, env(safe-area-inset-bottom));
+  }
+
+  .actionsRail {
+    right: 10px;
+    bottom: max(20px, env(safe-area-inset-bottom));
+  }
+
+  .muteHint {
+    top: max(16px, env(safe-area-inset-top));
+  }
+}
+
+/* =========================================================
+   SMALL MOBILE SCREENS
+   ========================================================= */
+
+@media (max-width: 380px) {
+  .bottomOverlay {
+    left: 12px;
+    right: 76px;
+  }
+
+  .actionsRail {
+    right: 7px;
+    gap: 14px;
+  }
+
+  .actionBtn {
+    min-width: 38px;
+    min-height: 38px;
+  }
+
+  .caption {
+    font-size: 13px;
+  }
+}
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .feed {
+    scroll-behavior: auto;
+  }
+
+  .actionBtn:active {
+    transform: none;
+  }
+}

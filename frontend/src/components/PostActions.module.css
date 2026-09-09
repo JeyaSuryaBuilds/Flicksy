@@ -1,0 +1,36 @@
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 2px 6px;
+}
+
+.left {
+  display: flex;
+  gap: 16px;
+}
+
+.iconBtn {
+  background: none;
+  border: none;
+  color: var(--color-cream);
+  display: flex;
+  min-width: 32px;
+  min-height: 32px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.liked {
+  composes: iconBtn;
+  background: none;
+  border: none;
+  color: var(--color-coral);
+  display: flex;
+  min-width: 32px;
+  min-height: 32px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}

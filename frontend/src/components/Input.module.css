@@ -1,0 +1,51 @@
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--color-input);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 15px 18px;
+}
+
+.wrapError {
+  border-color: #d9534f;
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--color-muted);
+}
+
+.icon svg {
+  width: 19px;
+  height: 19px;
+  stroke: currentColor;
+}
+
+.input {
+  background: transparent;
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 15px;
+}
+
+.error {
+  font-size: 12.5px;
+  color: #e08a83;
+  margin: 0;
+}

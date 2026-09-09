@@ -1,0 +1,12 @@
+.header {
+  padding: 6px 22px 12px;
+}
+
+.title {
+  font-size: 20px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+}

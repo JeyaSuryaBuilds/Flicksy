@@ -1,0 +1,40 @@
+.stage {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg);
+}
+
+.frame {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+.content {
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 26px 36px;
+}
+
+@media (min-width: 768px) {
+  .stage {
+    background: #0a0906;
+    padding: 40px 0;
+  }
+  .frame {
+    width: 440px;
+    min-height: 780px;
+    border-radius: 40px;
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
+  }
+  .content {
+    min-height: 780px;
+  }
+}

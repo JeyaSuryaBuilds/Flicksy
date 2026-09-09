@@ -1,0 +1,57 @@
+.story {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  width: 62px;
+  background: none;
+  border: none;
+  padding: 2px;
+}
+
+.ringWrap {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.unseen {
+  background: linear-gradient(135deg, var(--color-coral), #c9503a);
+}
+
+.seen {
+  background: var(--color-border);
+}
+
+.addBadge {
+  position: absolute;
+  bottom: 0;
+  right: -1px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-coral);
+  border: 2px solid var(--color-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.addBadge svg {
+  width: 9px;
+  height: 9px;
+}
+
+.name {
+  font-size: 11px;
+  color: var(--color-muted);
+  max-width: 62px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

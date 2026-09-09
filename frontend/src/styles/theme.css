@@ -1,0 +1,173 @@
+/* ==========================================================================
+   Flicksy design tokens
+   Extracted from the source-of-truth mockups: forgot-password.html / home-feed.html
+   ========================================================================== */
+
+:root {
+  /* Color */
+  --color-bg: #15130f;
+  --color-card: #1e1b16;
+  --color-input: #211d18;
+  --color-cream: #f5efe4;
+  --color-muted: #a79c8c;
+  --color-muted-dim: #5e564a;
+  --color-coral: #ff6b4a;
+  --color-coral-soft: rgba(255, 107, 74, 0.14);
+  --color-border: #2c271f;
+  --color-avatar-bg: #3a342a;
+
+  /* Type */
+  --font-display: "Sora", sans-serif;
+  --font-body: "Inter", sans-serif;
+
+  /* Radius */
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  --radius-xl: 40px;
+  --radius-round: 50%;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 22px;
+  --space-6: 28px;
+  --space-7: 36px;
+
+  /* Shadow */
+  --shadow-card: 0 12px 30px rgba(0, 0, 0, 0.35);
+  --shadow-coral: 0 12px 30px rgba(255, 107, 74, 0.28);
+
+  /* Breakpoints (referenced in comments; enforced via media queries below) */
+  --bp-tablet: 768px;
+  --bp-desktop: 1024px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-bg);
+  color: var(--color-cream);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  margin: 0;
+  color: var(--color-cream);
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+input,
+textarea {
+  font-family: var(--font-body);
+  color: var(--color-cream);
+}
+
+/* Visible keyboard focus for accessibility across the whole app */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--color-coral);
+  outline-offset: 2px;
+}
+
+::placeholder {
+  color: var(--color-muted-dim);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Explicit reduce-motion setting from Settings → Appearance (independent of OS preference) */
+[data-reduce-motion="true"] *,
+[data-reduce-motion="true"] *::before,
+[data-reduce-motion="true"] *::after {
+  animation-duration: 0.001ms !important;
+  transition-duration: 0.001ms !important;
+}
+
+/* Light appearance — Settings → Appearance. Distinct from Space Theme, which only affects
+   an individual user's own Space and is handled separately via SpaceThemeWrapper. */
+[data-theme="light"] {
+  --color-bg: #f7f3ec;
+  --color-card: #ffffff;
+  --color-input: #f0ebe1;
+  --color-cream: #201c15;
+  --color-muted: #766e5f;
+  --color-muted-dim: #a39a89;
+  --color-border: #e3dccc;
+  --color-avatar-bg: #ded4c0;
+}
+
+/* Abstract background blobs, reused across auth screens */
+.bg-blob-a {
+  position: absolute;
+  top: -120px;
+  right: -90px;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, rgba(255, 107, 74, 0.32), rgba(255, 107, 74, 0) 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.bg-blob-b {
+  position: absolute;
+  top: 60px;
+  left: -140px;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 60% 40%, rgba(120, 50, 40, 0.32), rgba(120, 50, 40, 0) 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

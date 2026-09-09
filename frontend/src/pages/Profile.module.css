@@ -1,0 +1,91 @@
+.tabs {
+  display: flex;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  margin-top: 12px;
+}
+
+.tab,
+.tabActive {
+  flex: 1;
+  padding: 13px;
+  text-align: center;
+  font-size: 13px;
+  background: none;
+  border: none;
+  color: var(--color-muted);
+  border-bottom: 2px solid transparent;
+}
+
+.tabActive {
+  color: var(--color-coral);
+  border-bottom-color: var(--color-coral);
+}
+
+.editForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 22px 0;
+}
+
+.settingsLink {
+  font-size: 13px;
+  color: var(--color-muted);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 8px 14px;
+}
+
+.avatarEditRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.avatarChangeBtn {
+  background: var(--color-input);
+  border: 1px solid var(--color-border);
+  color: var(--color-cream);
+  border-radius: var(--radius-md);
+  padding: 10px 16px;
+  font-size: 13px;
+}
+
+.avatarChangeBtn:disabled {
+  opacity: 0.5;
+}
+
+.themeLink {
+  font-size: 13px;
+  color: var(--color-coral);
+  background: var(--color-coral-soft);
+  border: 1px solid rgba(255, 107, 74, 0.35);
+  border-radius: 14px;
+  padding: 8px 14px;
+}
+
+.tagHintMuted {
+  font-size: 12px;
+  color: var(--color-muted);
+  margin-top: 6px;
+}
+
+.tagHintOk {
+  font-size: 12px;
+  color: #7fce9a;
+  margin-top: 6px;
+}
+
+.tagHintError {
+  font-size: 12px;
+  color: #e08a83;
+  margin-top: 6px;
+}

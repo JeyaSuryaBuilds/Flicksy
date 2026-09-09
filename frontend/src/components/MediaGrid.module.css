@@ -1,0 +1,27 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+}
+
+.tile {
+  position: relative;
+  aspect-ratio: 1;
+  background: linear-gradient(150deg, #2a2118, #1a1712 60%, #241c16);
+  border: none;
+  padding: 0;
+}
+
+.videoTag {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

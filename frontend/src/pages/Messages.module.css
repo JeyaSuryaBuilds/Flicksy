@@ -1,0 +1,102 @@
+.twoColumn {
+  display: flex;
+  min-height: calc(100vh - 60px);
+}
+
+.header {
+  padding: 6px 22px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.title {
+  font-size: 20px;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flashInboxBtn {
+  background: var(--color-coral-soft);
+  border: 1px solid rgba(255, 107, 74, 0.35);
+  color: var(--color-coral);
+  border-radius: 14px;
+  padding: 7px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.list {
+  width: 100%;
+  border-right: none;
+}
+
+.listHiddenOnMobile {
+  display: none;
+  width: 100%;
+}
+
+.chatVisible {
+  width: 100%;
+}
+
+.chatHiddenOnMobile {
+  display: none;
+}
+
+.placeholder {
+  display: none;
+}
+
+.flashFab {
+  position: fixed;
+  right: 20px;
+  bottom: calc(96px + env(safe-area-inset-bottom));
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--color-coral);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12px 28px rgba(255, 107, 74, 0.4);
+  z-index: 90;
+}
+
+@media (min-width: 768px) {
+  .flashFab {
+    bottom: 28px;
+  }
+}
+
+@media (min-width: 768px) {
+  .list,
+  .listHiddenOnMobile {
+    display: block;
+    width: 340px;
+    border-right: 1px solid var(--color-border);
+    flex-shrink: 0;
+  }
+
+  .chatVisible,
+  .chatHiddenOnMobile {
+    display: flex;
+    flex: 1;
+  }
+
+  .placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    color: var(--color-muted);
+    font-size: 13.5px;
+  }
+}

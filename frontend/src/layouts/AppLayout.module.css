@@ -1,0 +1,46 @@
+.shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  padding-bottom: 90px; /* space for mobile bottom nav */
+}
+
+@media (min-width: 768px) {
+  .main {
+    padding-bottom: 24px;
+  }
+}
+
+.centerColumn {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  padding: 0 0 20px;
+}
+
+@media (min-width: 1024px) {
+  .centerColumn {
+    padding: 28px 32px 20px;
+  }
+}
+
+.content {
+  width: 100%;
+  max-width: 560px;
+}
+
+.rightRail {
+  display: none;
+  width: 300px;
+  flex-shrink: 0;
+}
+
+@media (min-width: 1280px) {
+  .rightRail {
+    display: block;
+  }
+}
