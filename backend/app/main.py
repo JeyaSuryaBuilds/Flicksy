@@ -12,8 +12,10 @@ from app.api import media, moments, settings, ai, reports, rush, soundbox, flash
 # Import models so they're registered on Base before create_all runs.
 from app.models import models  # noqa: F401
 
+
 Base.metadata.create_all(bind=engine)
 run_sqlite_autopatch(engine, Base)
+
 
 app = FastAPI(
     title="Flicksy API",
@@ -21,7 +23,21 @@ app = FastAPI(
     version="1.0.0",
 )
 
-allowed_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",")
+
+# CORS configuration
+# Supports:
+# - Local React/Vite development
+# - Capacitor Android/iOS WebView
+# - Production origins configured through Render environment variables
+allowed_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:5173,http://localhost"
+    ).split(",")
+    if origin.strip()
+]
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -30,6 +46,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 app.include_router(auth.router)
 app.include_router(users.router)
@@ -49,20 +66,39 @@ app.include_router(flash.router)
 app.include_router(space_theme.router)
 app.include_router(admin.router)
 
-# Serve PUBLIC media locally in development. Only the public/ subdirectory is mounted —
-# private/ (Flash) is deliberately NOT static-served; see GET /media/private/{filename} in
-# app/api/media.py for authorized-only access. In production, swap MEDIA_STORAGE_BACKEND to a
-# cloud provider (see app/services/media_service.py) and drop this mount.
-_media_public_dir = os.path.join(os.getenv("MEDIA_LOCAL_DIR", "./media"), "public")
+
+# Serve PUBLIC media locally in development.
+# Only the public/ subdirectory is mounted —
+# private/ (Flash) is deliberately NOT static-served.
+# See GET /media/private/{filename} in app/api/media.py
+# for authorized-only access.
+#
+# In production, swap MEDIA_STORAGE_BACKEND to a cloud provider
+# (see app/services/media_service.py) and drop this mount.
+_media_public_dir = os.path.join(
+    os.getenv("MEDIA_LOCAL_DIR", "./media"),
+    "public"
+)
+
 os.makedirs(_media_public_dir, exist_ok=True)
-app.mount("/media", StaticFiles(directory=_media_public_dir), name="media")
+
+app.mount(
+    "/media",
+    StaticFiles(directory=_media_public_dir),
+    name="media"
+)
 
 
 @app.get("/")
 def root():
-    return {"status": "ok", "service": "flicksy-api"}
+    return {
+        "status": "ok",
+        "service": "flicksy-api"
+    }
 
 
 @app.get("/health")
 def health():
-    return {"status": "healthy"}
+    return {
+        "status": "healthy"
+    }
