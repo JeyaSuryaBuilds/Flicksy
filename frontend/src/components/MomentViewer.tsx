@@ -22,26 +22,84 @@ const FILTER_CSS: Record<string, string> = {
 };
 
 interface ParsedOverlay {
-  textOverlays: { id: string; text: string; x: number; y: number; color: string; fontSize: number }[];
-  drawings: { id: string; points: { x: number; y: number }[]; color: string; strokeWidth: number }[];
+  textOverlays: {
+    id: string;
+    text: string;
+    x: number;
+    y: number;
+    color: string;
+    fontSize: number;
+  }[];
+  drawings: {
+    id: string;
+    points: { x: number; y: number }[];
+    color: string;
+    strokeWidth: number;
+  }[];
   filter: string;
 }
 
 function parseOverlayData(raw?: string | null): ParsedOverlay {
-  if (!raw) return { textOverlays: [], drawings: [], filter: "none" };
+  if (!raw) {
+    return {
+      textOverlays: [],
+      drawings: [],
+      filter: "none",
+    };
+  }
+
   try {
     const parsed = JSON.parse(raw);
+
     return {
       textOverlays: parsed.textOverlays || [],
       drawings: parsed.drawings || [],
       filter: parsed.filter || "none",
     };
   } catch {
-    return { textOverlays: [], drawings: [], filter: "none" };
+    return {
+      textOverlays: [],
+      drawings: [],
+      filter: "none",
+    };
   }
 }
 
-export function MomentViewer({ groups, startGroupIndex, onClose }: MomentViewerProps) {
+/**
+ * Resolve Moment media URLs for both local development and production APK.
+ *
+ * Backend may return:
+ *   /media/filename.jpg
+ *
+ * In the Capacitor APK, relative URLs point to the WebView itself.
+ * Therefore relative media URLs must be prefixed with the production API URL.
+ *
+ * Absolute URLs are returned unchanged.
+ */
+function resolveMediaUrl(mediaUrl?: string | null): string {
+  if (!mediaUrl) return "";
+
+  // Already an absolute URL.
+  if (/^https?:\/\//i.test(mediaUrl)) {
+    return mediaUrl;
+  }
+
+  const apiBaseUrl = (
+    import.meta.env.VITE_API_URL || "http://localhost:8000"
+  ).replace(/\/+$/, "");
+
+  const normalizedPath = mediaUrl.startsWith("/")
+    ? mediaUrl
+    : `/${mediaUrl}`;
+
+  return `${apiBaseUrl}${normalizedPath}`;
+}
+
+export function MomentViewer({
+  groups,
+  startGroupIndex,
+  onClose,
+}: MomentViewerProps) {
   const [groupIndex, setGroupIndex] = useState(startGroupIndex);
   const [momentIndex, setMomentIndex] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -51,30 +109,42 @@ export function MomentViewer({ groups, startGroupIndex, onClose }: MomentViewerP
 
   useEffect(() => {
     if (!moment) return;
+
     viewMoment(moment.id).catch(() => {
       // non-critical — view tracking failing shouldn't block viewing
     });
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [moment?.id]);
 
   useEffect(() => {
     setProgress(0);
+
     const start = Date.now();
+
     const interval = setInterval(() => {
       const elapsed = Date.now() - start;
-      const pct = Math.min(100, (elapsed / MOMENT_DURATION_MS) * 100);
+      const pct = Math.min(
+        100,
+        (elapsed / MOMENT_DURATION_MS) * 100
+      );
+
       setProgress(pct);
+
       if (pct >= 100) {
         clearInterval(interval);
         goNext();
       }
     }, 50);
+
     return () => clearInterval(interval);
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupIndex, momentIndex]);
 
   const goNext = () => {
     if (!group) return;
+
     if (momentIndex < group.moments.length - 1) {
       setMomentIndex((i) => i + 1);
     } else if (groupIndex < groups.length - 1) {
@@ -90,6 +160,7 @@ export function MomentViewer({ groups, startGroupIndex, onClose }: MomentViewerP
       setMomentIndex((i) => i - 1);
     } else if (groupIndex > 0) {
       const prevGroup = groups[groupIndex - 1];
+
       setGroupIndex((i) => i - 1);
       setMomentIndex(prevGroup.moments.length - 1);
     }
@@ -98,17 +169,37 @@ export function MomentViewer({ groups, startGroupIndex, onClose }: MomentViewerP
   if (!group || !moment) return null;
 
   const overlay = parseOverlayData(moment.overlay_data);
-  const strokeToPath = (points: { x: number; y: number }[]) =>
-    points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
+
+  const mediaUrl = resolveMediaUrl(moment.media_url);
+
+  const strokeToPath = (
+    points: { x: number; y: number }[]
+  ) =>
+    points
+      .map(
+        (p, i) =>
+          `${i === 0 ? "M" : "L"}${p.x},${p.y}`
+      )
+      .join(" ");
 
   return (
     <div className={styles.overlay}>
       <div className={styles.progressRow}>
         {group.moments.map((m, i) => (
-          <div key={m.id} className={styles.progressTrack}>
+          <div
+            key={m.id}
+            className={styles.progressTrack}
+          >
             <div
               className={styles.progressFill}
-              style={{ width: i < momentIndex ? "100%" : i === momentIndex ? `${progress}%` : "0%" }}
+              style={{
+                width:
+                  i < momentIndex
+                    ? "100%"
+                    : i === momentIndex
+                      ? `${progress}%`
+                      : "0%",
+              }}
             />
           </div>
         ))}
@@ -116,42 +207,107 @@ export function MomentViewer({ groups, startGroupIndex, onClose }: MomentViewerP
 
       <div className={styles.header}>
         <div className={styles.headerLeft}>
-          <Avatar url={group.author_avatar_url} initials={group.author_avatar_initials} size={34} />
-          <span className={styles.username}>{group.author_username}</span>
+          <Avatar
+            url={group.author_avatar_url}
+            initials={group.author_avatar_initials}
+            size={34}
+          />
+
+          <span className={styles.username}>
+            {group.author_username}
+          </span>
         </div>
-        <button className={styles.closeBtn} onClick={onClose} aria-label="Close Moment View">
+
+        <button
+          className={styles.closeBtn}
+          onClick={onClose}
+          aria-label="Close Moment View"
+        >
           <CloseIcon size={20} />
         </button>
       </div>
 
       <div className={styles.mediaArea}>
-        <button className={styles.tapZoneLeft} onClick={goPrev} aria-label="Previous Moment" />
-        <button className={styles.tapZoneRight} onClick={goNext} aria-label="Next Moment" />
-        {moment.media_url ? (
+        <button
+          className={styles.tapZoneLeft}
+          onClick={goPrev}
+          aria-label="Previous Moment"
+        />
+
+        <button
+          className={styles.tapZoneRight}
+          onClick={goNext}
+          aria-label="Next Moment"
+        />
+
+        {mediaUrl ? (
           moment.media_type === "video" ? (
-            <video src={moment.media_url} className={styles.realMedia} style={{ filter: FILTER_CSS[overlay.filter] }} autoPlay muted loop />
+            <video
+              src={mediaUrl}
+              className={styles.realMedia}
+              style={{
+                filter: FILTER_CSS[overlay.filter],
+              }}
+              autoPlay
+              muted
+              loop
+              playsInline
+            />
           ) : (
-            <img src={moment.media_url} className={styles.realMedia} style={{ filter: FILTER_CSS[overlay.filter] }} alt="" />
+            <img
+              src={mediaUrl}
+              className={styles.realMedia}
+              style={{
+                filter: FILTER_CSS[overlay.filter],
+              }}
+              alt=""
+            />
           )
         ) : (
           <div className={styles.placeholderMedia} />
         )}
 
-        <svg className={styles.drawLayer} viewBox="0 0 100 100" preserveAspectRatio="none">
+        <svg
+          className={styles.drawLayer}
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+        >
           {overlay.drawings.map((s) => (
-            <path key={s.id} d={strokeToPath(s.points)} stroke={s.color} strokeWidth={s.strokeWidth} fill="none" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+            <path
+              key={s.id}
+              d={strokeToPath(s.points)}
+              stroke={s.color}
+              strokeWidth={s.strokeWidth}
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              vectorEffect="non-scaling-stroke"
+            />
           ))}
         </svg>
 
         {overlay.textOverlays.map((o) => (
-          <div key={o.id} className={styles.textOverlay} style={{ left: `${o.x}%`, top: `${o.y}%`, color: o.color, fontSize: o.fontSize }}>
+          <div
+            key={o.id}
+            className={styles.textOverlay}
+            style={{
+              left: `${o.x}%`,
+              top: `${o.y}%`,
+              color: o.color,
+              fontSize: o.fontSize,
+            }}
+          >
             {o.text}
           </div>
         ))}
       </div>
 
       {(groupIndex > 0 || momentIndex > 0) && (
-        <button className={styles.navHintLeft} onClick={goPrev} aria-hidden="true">
+        <button
+          className={styles.navHintLeft}
+          onClick={goPrev}
+          aria-hidden="true"
+        >
           <BackIcon size={22} />
         </button>
       )}
