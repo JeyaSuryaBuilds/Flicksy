@@ -23,6 +23,24 @@ app = FastAPI(
     version="1.0.0",
 )
 
+<<<<<<< HEAD
+
+# CORS configuration
+# Supports:
+# - Local React/Vite development
+# - Capacitor Android/iOS WebView
+# - Production origins configured through Render environment variables
+allowed_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:5173,http://localhost"
+    ).split(",")
+    if origin.strip()
+]
+
+=======
+>>>>>>> 34c206a (Fix Capacitor CORS)
 
 # CORS configuration
 # Supports:
@@ -39,10 +57,13 @@ allowed_origins = [
 ]
 
 
+# Allow requests from Capacitor/WebView during testing.
+# This is intentionally configured without credentials while testing
+# the APK CORS flow.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -101,4 +122,8 @@ def root():
 def health():
     return {
         "status": "healthy"
+<<<<<<< HEAD
     }
+=======
+    }
+>>>>>>> 34c206a (Fix Capacitor CORS)
