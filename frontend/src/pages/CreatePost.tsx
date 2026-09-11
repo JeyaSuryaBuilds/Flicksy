@@ -43,9 +43,9 @@ export function CreatePost() {
       const description = caption.trim() || `A ${mediaType} Flick${location ? ` from ${location}` : ""}`;
       const result = await generateCaption(description, "casual", caption.trim().length > 0);
       setCaption(result.caption);
-      showToast(`Caption drafted by Flicksy AI (${result.provider})`, "success");
+      showToast(`Caption drafted by flickzy AI (${result.provider})`, "success");
     } catch (err: any) {
-      showToast(err?.response?.data?.detail || "Flicksy AI is unavailable right now", "error");
+      showToast(err?.response?.data?.detail || "flickzy AI is unavailable right now", "error");
     } finally {
       setIsAiWorking(false);
     }
@@ -53,7 +53,7 @@ export function CreatePost() {
 
   const handleAiTopicTags = async () => {
     if (!caption.trim()) {
-      showToast("Write a caption first so Flicksy AI has something to work with", "error");
+      showToast("Write a caption first so flickzy AI has something to work with", "error");
       return;
     }
     setIsAiWorking(true);
@@ -61,7 +61,7 @@ export function CreatePost() {
       const result = await suggestTopicTags(caption);
       setTopicTags(result.tags);
     } catch (err: any) {
-      showToast(err?.response?.data?.detail || "Flicksy AI is unavailable right now", "error");
+      showToast(err?.response?.data?.detail || "flickzy AI is unavailable right now", "error");
     } finally {
       setIsAiWorking(false);
     }
@@ -153,7 +153,7 @@ export function CreatePost() {
         <div className={styles.aiRow}>
           <button type="button" className={styles.aiBtn} onClick={handleAiCaption} disabled={isAiWorking}>
             <SparkleIcon size={15} />
-            {caption.trim() ? "Improve with Flicksy AI" : "Write caption with Flicksy AI"}
+            {caption.trim() ? "Improve with flickzy AI" : "Write caption with flickzy AI"}
           </button>
           <button type="button" className={styles.aiBtn} onClick={handleAiTopicTags} disabled={isAiWorking}>
             <SparkleIcon size={15} />

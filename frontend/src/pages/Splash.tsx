@@ -21,7 +21,7 @@ export function Splash() {
     <AuthLayout>
       <div className={styles.center}>
         <div className={styles.wordmark}>
-          flick<span>sy</span>
+          flick<span>zy</span>
         </div>
         <div className={styles.spinnerWrap}>
           <LoadingSpinner size={22} />

@@ -15,11 +15,11 @@ import type { UserSettings } from "../types";
 import styles from "./Settings.module.css";
 
 const SUPPORT_CONTENT: Record<string, { title: string; body: string }> = {
-  help: { title: "Help Center", body: "For help using Flicksy, reach out to support@flicksy.dev. We typically respond within 1–2 business days." },
+  help: { title: "Help Center", body: "For help using flickzy, reach out to support@flickzy.dev. We typically respond within 1–2 business days." },
   guidelines: { title: "Community Guidelines", body: "Be respectful. No harassment, hate speech, or spam. Report content that violates these guidelines using the Report option on any Flick, Rush, or Moment." },
-  privacy: { title: "Privacy Policy", body: "Flicksy stores the content you post and the account details you provide. Media is preserved in original quality and only shared according to your Privacy settings." },
-  terms: { title: "Terms of Service", body: "By using Flicksy you agree to use the platform respectfully and lawfully. Accounts violating these terms may be suspended by an administrator." },
-  about: { title: "About Flicksy", body: "Flicksy — an original social platform for Flicks, Rush, Moments, and Flash. Version 1.0.0." },
+  privacy: { title: "Privacy Policy", body: "flickzy stores the content you post and the account details you provide. Media is preserved in original quality and only shared according to your Privacy settings." },
+  terms: { title: "Terms of Service", body: "By using flickzy you agree to use the platform respectfully and lawfully. Accounts violating these terms may be suspended by an administrator." },
+  about: { title: "About flickzy", body: "flickzy — an original social platform for Flicks, Rush, Moments, and Flash. Version 1.0.0." },
 };
 
 export function Settings() {
@@ -227,10 +227,10 @@ export function Settings() {
         </section>
 
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Flicksy AI</h2>
+          <h2 className={styles.sectionTitle}>flickzy AI</h2>
           <Toggle
             label="AI assistance"
-            description="Turn off to hide Flicksy AI suggestions everywhere"
+            description="Turn off to hide flickzy AI suggestions everywhere"
             checked={settings.ai_enabled}
             onChange={(v) => patch({ ai_enabled: v })}
           />
@@ -241,7 +241,7 @@ export function Settings() {
           />
           <Toggle
             label="Personalization"
-            description="Let Flicksy AI use your content and activity for better suggestions"
+            description="Let flickzy AI use your content and activity for better suggestions"
             checked={settings.ai_personalization}
             onChange={(v) => patch({ ai_personalization: v })}
           />

@@ -30,6 +30,36 @@ export async function deleteMoment(momentId: string): Promise<void> {
   await api.delete(`/moments/${momentId}`);
 }
 
+export interface MomentViewer {
+  user_id: string;
+  username: string;
+  display_name: string;
+  avatar_url: string;
+  avatar_initials: string;
+  viewed_at: string;
+}
+
+export async function getMomentViewers(
+  momentId: string,
+): Promise<MomentViewer[]> {
+  const res = await api.get<MomentViewer[]>(
+    `/moments/${momentId}/viewers`,
+  );
+
+  return res.data;
+}
+
+export async function reportMoment(
+  momentId: string,
+  reason: string,
+  details = "",
+): Promise<void> {
+  await api.post(`/moments/${momentId}/report`, {
+    reason,
+    details,
+  });
+}
+
 export interface MomentEcho {
   id: string;
   story_id: string;
@@ -38,29 +68,63 @@ export interface MomentEcho {
   created_at: string;
 }
 
-export async function getMomentEchoes(momentId: string): Promise<MomentEcho[]> {
-  const res = await api.get<MomentEcho[]>(`/moments/${momentId}/echoes`);
+export async function getMomentEchoes(
+  momentId: string,
+): Promise<MomentEcho[]> {
+  const res = await api.get<MomentEcho[]>(
+    `/moments/${momentId}/echoes`,
+  );
+
   return res.data;
 }
 
-export async function addMomentEcho(momentId: string, body: string): Promise<MomentEcho> {
-  const res = await api.post<MomentEcho>(`/moments/${momentId}/echoes`, { body });
+export async function addMomentEcho(
+  momentId: string,
+  body: string,
+): Promise<MomentEcho> {
+  const res = await api.post<MomentEcho>(
+    `/moments/${momentId}/echoes`,
+    { body },
+  );
+
   return res.data;
 }
 
-export async function sendOnMoment(momentId: string, conversationId: string): Promise<void> {
-  await api.post(`/moments/${momentId}/send-on`, { conversation_id: conversationId });
+export async function sendOnMoment(
+  momentId: string,
+  conversationId: string,
+): Promise<void> {
+  await api.post(
+    `/moments/${momentId}/send-on`,
+    { conversation_id: conversationId },
+  );
 }
 
-export async function recastMoment(momentId: string, caption?: string): Promise<Moment> {
-  const res = await api.post<Moment>(`/moments/${momentId}/recast`, { caption });
+export async function recastMoment(
+  momentId: string,
+  caption?: string,
+): Promise<Moment> {
+  const res = await api.post<Moment>(
+    `/moments/${momentId}/recast`,
+    { caption },
+  );
+
   return res.data;
 }
 
 export async function updateMomentPermissions(
   momentId: string,
-  permissions: { allow_echo?: boolean; allow_send_on?: boolean; allow_recast?: boolean }
+  permissions: {
+    allow_echo?: boolean;
+    allow_send_on?: boolean;
+    allow_recast?: boolean;
+  },
 ): Promise<Moment> {
-  const res = await api.put<Moment>(`/moments/${momentId}/permissions`, null, { params: permissions });
+  const res = await api.put<Moment>(
+    `/moments/${momentId}/permissions`,
+    null,
+    { params: permissions },
+  );
+
   return res.data;
 }

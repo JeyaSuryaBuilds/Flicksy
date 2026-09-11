@@ -16,7 +16,7 @@ export function Make() {
     {
       icon: <RushIcon size={26} />,
       title: "Rush",
-      description: "Post a short video to Flicksy's Rush experience",
+      description: "Post a short video to flickzy's Rush experience",
       onClick: () => navigate("/create/rush"),
     },
     {

@@ -427,3 +427,55 @@
     transform: none;
   }
 }
+
+/* =========================================================
+   RUSH SOUND CONTROL
+   ========================================================= */
+
+.speakerButton {
+  position: absolute;
+
+  top: 16px;
+  right: 16px;
+
+  z-index: 6;
+
+  width: 40px;
+  height: 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border: none;
+  border-radius: 50%;
+
+  background: rgba(0, 0, 0, 0.48);
+  color: #fff;
+
+  cursor: pointer;
+
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.speakerButton:active {
+  transform: scale(0.92);
+}
+
+.speakerSvg {
+  width: 21px;
+  height: 21px;
+}
+
+@media (max-width: 767px) {
+  .speakerButton {
+    top: max(16px, env(safe-area-inset-top));
+    right: 14px;
+  }
+}

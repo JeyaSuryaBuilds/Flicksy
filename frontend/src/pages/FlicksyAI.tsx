@@ -80,7 +80,7 @@ export function FlicksyAI() {
         setConversations(convos);
       }
     } catch (err: any) {
-      const detail = err?.response?.data?.detail || "Flicksy AI couldn't respond — try again.";
+      const detail = err?.response?.data?.detail || "flickzy AI couldn't respond — try again.";
       setError(detail);
       setLastFailedMessage(text);
     } finally {
@@ -118,7 +118,7 @@ export function FlicksyAI() {
         <div className={styles.header}>
           <div className={styles.headerTitle}>
             <SparkleIcon size={20} className={styles.sparkle} />
-            <h1>Flicksy AI</h1>
+            <h1>flickzy AI</h1>
           </div>
           <button className={styles.newBtn} onClick={startNewConversation}>
             New chat
@@ -149,7 +149,7 @@ export function FlicksyAI() {
             <div className={styles.emptyWrap}>
               <EmptyState
                 icon={<SparkleIcon />}
-                title="Ask Flicksy AI anything"
+                title="Ask flickzy AI anything"
                 description="Captions, Rush ideas, bio help, Topic Tags, tone rewrites, translation — all in one place."
               />
               <div className={styles.prompts}>
@@ -200,7 +200,7 @@ export function FlicksyAI() {
         <form className={styles.inputRow} onSubmit={handleSubmit}>
           <input
             className={styles.input}
-            placeholder="Ask Flicksy AI…"
+            placeholder="Ask flickzy AI…"
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />

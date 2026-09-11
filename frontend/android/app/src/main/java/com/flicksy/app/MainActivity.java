@@ -1,4 +1,4 @@
-package com.flicksy.app;
+package com.flickzy.app;
 
 import com.getcapacitor.BridgeActivity;
 

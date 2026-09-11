@@ -14,7 +14,7 @@ const primaryLinks = [
 const secondaryLinks = [
   { to: "/messages", label: "Chats", Icon: MessageIcon },
   { to: "/notifications", label: "Alerts", Icon: BellIcon },
-  { to: "/flicksy-ai", label: "Flicksy AI", Icon: SparkleIcon },
+  { to: "/flickzy-ai", label: "flickzy AI", Icon: SparkleIcon },
 ];
 
 export function DesktopSidebar() {
@@ -23,7 +23,7 @@ export function DesktopSidebar() {
   return (
     <aside className={styles.sidebar} aria-label="Primary">
       <div className={styles.wordmark}>
-        flick<span>sy</span>
+        flick<span>zy</span>
       </div>
 
       <nav className={styles.links}>

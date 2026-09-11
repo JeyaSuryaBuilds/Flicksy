@@ -6,10 +6,10 @@ export function TopNavigation() {
   return (
     <header className={styles.header}>
       <div className={styles.wordmark}>
-        flick<span>sy</span>
+        flick<span>zy</span>
       </div>
       <div className={styles.icons}>
-        <Link to="/flicksy-ai" className={styles.iconBtn} aria-label="Flicksy AI">
+        <Link to="/flicksy-ai" className={styles.iconBtn} aria-label="flickzy AI">
           <SparkleIcon />
         </Link>
         <Link to="/notifications" className={styles.iconBtn} aria-label="Alerts">

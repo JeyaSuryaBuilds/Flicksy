@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.flicksy.app',
-  appName: 'Flicksy',
+  appId: 'com.flickzy.app',
+  appName: 'Flickzy',
   webDir: 'dist'
 };
 

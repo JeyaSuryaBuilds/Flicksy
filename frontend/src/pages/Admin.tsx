@@ -25,7 +25,7 @@ export function Admin() {
   return (
     <AppLayout>
       <div className={styles.wrap}>
-        <h1 className={styles.title}>Flicksy Admin</h1>
+        <h1 className={styles.title}>flickzy Admin</h1>
         <div className={styles.tabs}>
           {TABS.map((t) => (
             <button key={t} className={t === tab ? styles.tabActive : styles.tab} onClick={() => setTab(t)}>

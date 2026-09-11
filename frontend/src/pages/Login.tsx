@@ -33,7 +33,7 @@ export function Login() {
   };
 
   const fillDemo = () => {
-    setEmail("demo@flicksy.dev");
+    setEmail("demo@flickzy.dev");
     setPassword("password123");
     showToast("Demo credentials filled in", "info");
   };
@@ -42,7 +42,7 @@ export function Login() {
     <AuthLayout>
       <div className={styles.topSpace} />
       <div className={styles.wordmark}>
-        flick<span>sy</span>
+        flick<span>zy</span>
       </div>
 
       <h1 className={styles.heading}>Welcome back</h1>

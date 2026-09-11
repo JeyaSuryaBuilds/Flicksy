@@ -35,7 +35,7 @@ export function ForgotPassword() {
           <BackIcon />
         </button>
         <div className={styles.wordmark}>
-          flick<span>sy</span>
+          flick<span>zy</span>
         </div>
         <div className={styles.spacer} />
       </div>

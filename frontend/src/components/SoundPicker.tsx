@@ -76,7 +76,7 @@ export function SoundPicker({ isOpen, onClose, onSelect }: SoundPickerProps) {
       ) : sounds.length === 0 ? (
         <EmptyState
           title="No sounds yet"
-          description={tab === "search" ? "Try a different search term." : "Flicksy's SoundBox catalog is still growing."}
+          description={tab === "search" ? "Try a different search term." : "flickzy's SoundBox catalog is still growing."}
         />
       ) : (
         <div className={styles.list}>

@@ -48,11 +48,11 @@ export function SignUp() {
     <AuthLayout>
       <div className={styles.topSpace} />
       <div className={styles.wordmark}>
-        flick<span>sy</span>
+        flick<span>zy</span>
       </div>
 
       <h1 className={styles.heading}>Create your account</h1>
-      <p className={styles.subheading}>Join Flicksy and start sharing your world.</p>
+      <p className={styles.subheading}>Join flickzy and start sharing your world.</p>
 
       <form className={styles.form} onSubmit={handleSubmit} noValidate>
         <Input
