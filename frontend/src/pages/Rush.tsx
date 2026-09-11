@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { AppLayout } from "../layouts/AppLayout";
 import { Avatar } from "../components/Avatar";
@@ -22,9 +22,7 @@ import styles from "./Rush.module.css";
 const PHOTO_DURATION_MS = 5000;
 const DOUBLE_TAP_DELAY_MS = 280;
 
-function resolveMediaUrl(
-  mediaUrl?: string | null,
-): string {
+function resolveMediaUrl(mediaUrl?: string | null): string {
   if (!mediaUrl) return "";
 
   if (/^https?:\/\//i.test(mediaUrl)) {
@@ -32,8 +30,7 @@ function resolveMediaUrl(
   }
 
   const apiBaseUrl = (
-    import.meta.env.VITE_API_URL ||
-    "http://localhost:8000"
+    import.meta.env.VITE_API_URL || "http://localhost:8000"
   ).replace(/\/+$/, "");
 
   const normalizedPath = mediaUrl.startsWith("/")
@@ -43,11 +40,7 @@ function resolveMediaUrl(
   return `${apiBaseUrl}${normalizedPath}`;
 }
 
-function SpeakerIcon({
-  muted,
-}: {
-  muted: boolean;
-}) {
+function SpeakerIcon({ muted }: { muted: boolean }) {
   if (muted) {
     return (
       <svg
@@ -62,7 +55,6 @@ function SpeakerIcon({
           strokeWidth="1.8"
           strokeLinejoin="round"
         />
-
         <path
           d="m18 9 3 6m0-6-3 6"
           fill="none"
@@ -87,7 +79,6 @@ function SpeakerIcon({
         strokeWidth="1.8"
         strokeLinejoin="round"
       />
-
       <path
         d="M17 8.5a5 5 0 0 1 0 7"
         fill="none"
@@ -95,7 +86,6 @@ function SpeakerIcon({
         strokeWidth="1.8"
         strokeLinecap="round"
       />
-
       <path
         d="M19.5 6a8.5 8.5 0 0 1 0 12"
         fill="none"
@@ -118,471 +108,466 @@ function PauseIcon() {
         fill: "currentColor",
       }}
     >
-      <rect
-        x="7"
-        y="5"
-        width="3.5"
-        height="14"
-        rx="1"
-      />
-      <rect
-        x="13.5"
-        y="5"
-        width="3.5"
-        height="14"
-        rx="1"
-      />
-    </svg>
-  );
-}
-
-function PlayIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      style={{
-        width: 23,
-        height: 23,
-        fill: "currentColor",
-      }}
-    >
-      <path d="M8 5.2v13.6c0 .8.9 1.3 1.6.9l10-6.8c.6-.4.6-1.3 0-1.7l-10-6.8C8.9 3.9 8 4.4 8 5.2Z" />
+      <rect x="7" y="5" width="3.5" height="14" rx="1" />
+      <rect x="13.5" y="5" width="3.5" height="14" rx="1" />
     </svg>
   );
 }
 
 export function Rush() {
   const [posts, setPosts] = useState<Post[]>([]);
-  const [isLoading, setIsLoading] =
-    useState(true);
-  const [error, setError] =
-    useState(false);
-  const [activePost, setActivePost] =
-    useState<Post | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [activePost, setActivePost] = useState<Post | null>(null);
 
   /**
-   * Default sound = ON
+   * Rush videos start with sound ON.
    */
-  const [muted, setMuted] =
-    useState(false);
+  const [muted, setMuted] = useState(false);
 
   /**
    * Pause state per Rush.
    */
-  const [pausedPosts, setPausedPosts] =
-    useState<Record<string, boolean>>(
-      {},
-    );
+  const [pausedPosts, setPausedPosts] = useState<
+    Record<string, boolean>
+  >({});
+
+  /**
+   * Keep a ref in sync with pausedPosts.
+   * This prevents IntersectionObserver from using stale state.
+   */
+  const pausedPostsRef = useRef<Record<string, boolean>>({});
 
   /**
    * Double-tap detection.
    */
-  const lastTapRef =
-    useRef<Record<string, number>>(
-      {},
-    );
+  const lastTapRef = useRef<Record<string, number>>({});
+
+  /**
+   * Pending single-tap timers.
+   */
+  const tapTimerRef = useRef<Record<string, number>>({});
 
   /**
    * Photo timing.
    */
-  const photoStartedAtRef =
-    useRef<Record<string, number>>(
-      {},
-    );
-
-  const photoElapsedRef =
-    useRef<Record<string, number>>(
-      {},
-    );
-
-  const photoTimerRef =
-    useRef<Record<string, number>>(
-      {},
-    );
+  const photoStartedAtRef = useRef<Record<string, number>>({});
+  const photoElapsedRef = useRef<Record<string, number>>({});
+  const photoTimerRef = useRef<Record<string, number>>({});
 
   /**
    * Video references.
    */
-  const videoRefs =
-    useRef<
-      Record<
-        string,
-        HTMLVideoElement | null
-      >
-    >({});
+  const videoRefs = useRef<
+    Record<string, HTMLVideoElement | null>
+  >({});
 
   const { showToast } = useToast();
 
+  /**
+   * Keep pausedPosts ref synchronized.
+   */
   useEffect(() => {
-    rushApi
-      .getRushFeed()
-      .then((res) =>
-        setPosts(res.posts),
-      )
-      .catch(() => setError(true))
-      .finally(() =>
-        setIsLoading(false),
-      );
-  }, []);
-
-  const updatePost = (
-    postId: string,
-    patch: Partial<Post>,
-  ) => {
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === postId
-          ? { ...p, ...patch }
-          : p,
-      ),
-    );
-  };
-
-  const handleLike = async (
-    post: Post,
-  ) => {
-    const wasLiked =
-      post.is_liked;
-
-    updatePost(post.id, {
-      is_liked: !wasLiked,
-      like_count:
-        post.like_count +
-        (wasLiked ? -1 : 1),
-    });
-
-    try {
-      if (wasLiked) {
-        await postsApi.unlikePost(
-          post.id,
-        );
-      } else {
-        await postsApi.likePost(
-          post.id,
-        );
-      }
-    } catch {
-      updatePost(post.id, {
-        is_liked: wasLiked,
-        like_count:
-          post.like_count,
-      });
-    }
-  };
-
-  const handleKeep = async (
-    post: Post,
-  ) => {
-    const wasKept =
-      post.is_bookmarked;
-
-    updatePost(post.id, {
-      is_bookmarked: !wasKept,
-    });
-
-    try {
-      if (wasKept) {
-        await postsApi.unbookmarkPost(
-          post.id,
-        );
-      } else {
-        await postsApi.bookmarkPost(
-          post.id,
-        );
-      }
-    } catch {
-      updatePost(post.id, {
-        is_bookmarked: wasKept,
-      });
-    }
-  };
-
-  const handleSendOn = (
-    post: Post,
-  ) => {
-    navigator.clipboard?.writeText(
-      `${window.location.origin}/r/${post.id}`,
-    );
-
-    showToast(
-      "Link copied — ready to Send On",
-      "success",
-    );
-  };
-
-  const clearPhotoTimer = (
-    postId: string,
-  ) => {
-    const timer =
-      photoTimerRef.current[
-        postId
-      ];
-
-    if (timer !== undefined) {
-      window.clearInterval(timer);
-
-      delete photoTimerRef.current[
-        postId
-      ];
-    }
-  };
-
-  const resetPlayback = (
-    postId: string,
-  ) => {
-    clearPhotoTimer(postId);
-
-    photoStartedAtRef.current[
-      postId
-    ] = 0;
-
-    photoElapsedRef.current[
-      postId
-    ] = 0;
-
-    setPausedPosts((prev) => ({
-      ...prev,
-      [postId]: false,
-    }));
-
-    const video =
-      videoRefs.current[postId];
-
-    if (video) {
-      video.pause();
-
-      try {
-        video.currentTime = 0;
-      } catch {
-        // Ignore unavailable video state.
-      }
-    }
-  };
-
-  const startPhotoTimer = (
-    postId: string,
-    goNext: () => void,
-  ) => {
-    clearPhotoTimer(postId);
-
-    if (
-      photoStartedAtRef.current[
-        postId
-      ] === 0
-    ) {
-      photoStartedAtRef.current[
-        postId
-      ] =
-        Date.now() -
-        (
-          photoElapsedRef.current[
-            postId
-          ] || 0
-        );
-    }
-
-    photoTimerRef.current[
-      postId
-    ] = window.setInterval(() => {
-      const started =
-        photoStartedAtRef.current[
-          postId
-        ];
-
-      if (!started) return;
-
-      const elapsed =
-        Date.now() - started;
-
-      if (
-        elapsed >=
-        PHOTO_DURATION_MS
-      ) {
-        clearPhotoTimer(postId);
-
-        photoElapsedRef.current[
-          postId
-        ] = PHOTO_DURATION_MS;
-
-        goNext();
-      }
-    }, 50);
-  };
+    pausedPostsRef.current = pausedPosts;
+  }, [pausedPosts]);
 
   /**
-   * Single tap:
-   * Pause / Resume
+   * Load Rush feed.
    */
-  const togglePause = (
-    post: Post,
-  ) => {
-    const currentlyPaused =
-      Boolean(
-        pausedPosts[post.id],
-      );
+  useEffect(() => {
+    let cancelled = false;
 
-    /**
-     * VIDEO
-     */
-    if (
-      post.media_type === "video"
-    ) {
-      const video =
-        videoRefs.current[
-          post.id
-        ];
-
-      if (video) {
-        if (currentlyPaused) {
-          video
-            .play()
-            .catch(() => {});
-        } else {
-          video.pause();
+    rushApi
+      .getRushFeed()
+      .then((res) => {
+        if (!cancelled) {
+          setPosts(res.posts);
         }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setError(true);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const updatePost = useCallback(
+    (postId: string, patch: Partial<Post>) => {
+      setPosts((prev) =>
+        prev.map((post) =>
+          post.id === postId
+            ? { ...post, ...patch }
+            : post,
+        ),
+      );
+    },
+    [],
+  );
+
+  /**
+   * Love / Unlike.
+   */
+  const handleLike = useCallback(
+    async (post: Post) => {
+      const wasLiked = post.is_liked;
+
+      updatePost(post.id, {
+        is_liked: !wasLiked,
+        like_count:
+          post.like_count + (wasLiked ? -1 : 1),
+      });
+
+      try {
+        if (wasLiked) {
+          await postsApi.unlikePost(post.id);
+        } else {
+          await postsApi.likePost(post.id);
+        }
+      } catch {
+        updatePost(post.id, {
+          is_liked: wasLiked,
+          like_count: post.like_count,
+        });
+      }
+    },
+    [updatePost],
+  );
+
+  /**
+   * Keep / Unkeep.
+   */
+  const handleKeep = useCallback(
+    async (post: Post) => {
+      const wasKept = post.is_bookmarked;
+
+      updatePost(post.id, {
+        is_bookmarked: !wasKept,
+      });
+
+      try {
+        if (wasKept) {
+          await postsApi.unbookmarkPost(post.id);
+        } else {
+          await postsApi.bookmarkPost(post.id);
+        }
+      } catch {
+        updatePost(post.id, {
+          is_bookmarked: wasKept,
+        });
+      }
+    },
+    [updatePost],
+  );
+
+  /**
+   * Send On.
+   */
+  const handleSendOn = useCallback(
+    (post: Post) => {
+      const link = `${window.location.origin}/r/${post.id}`;
+
+      if (navigator.clipboard) {
+        navigator.clipboard
+          .writeText(link)
+          .catch(() => {});
       }
 
+      showToast(
+        "Link copied — ready to Send On",
+        "success",
+      );
+    },
+    [showToast],
+  );
+
+  /**
+   * Clear photo timer.
+   */
+  const clearPhotoTimer = useCallback(
+    (postId: string) => {
+      const timer = photoTimerRef.current[postId];
+
+      if (timer !== undefined) {
+        window.clearInterval(timer);
+        delete photoTimerRef.current[postId];
+      }
+    },
+    [],
+  );
+
+  /**
+   * Reset playback state.
+   */
+  const resetPlayback = useCallback(
+    (postId: string) => {
+      clearPhotoTimer(postId);
+
+      photoStartedAtRef.current[postId] = 0;
+      photoElapsedRef.current[postId] = 0;
+
+      pausedPostsRef.current = {
+        ...pausedPostsRef.current,
+        [postId]: false,
+      };
+
       setPausedPosts((prev) => ({
         ...prev,
-        [post.id]:
-          !currentlyPaused,
+        [postId]: false,
       }));
 
-      return;
-    }
+      const video = videoRefs.current[postId];
 
-    /**
-     * PHOTO
-     */
-    if (currentlyPaused) {
+      if (video) {
+        video.pause();
+
+        try {
+          video.currentTime = 0;
+        } catch {
+          // Ignore unavailable video state.
+        }
+      }
+    },
+    [clearPhotoTimer],
+  );
+
+  /**
+   * Move to next Rush.
+   */
+  const goNext = useCallback(
+    (currentIndex: number) => {
+      if (currentIndex >= posts.length - 1) {
+        return;
+      }
+
+      const current = posts[currentIndex];
+      const next = posts[currentIndex + 1];
+
+      if (current) {
+        resetPlayback(current.id);
+      }
+
+      if (next) {
+        resetPlayback(next.id);
+
+        const element = document.getElementById(
+          `rush-${next.id}`,
+        );
+
+        element?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+    },
+    [posts, resetPlayback],
+  );
+
+  /**
+   * Start photo timer.
+   */
+  const startPhotoTimer = useCallback(
+    (postId: string) => {
+      clearPhotoTimer(postId);
+
+      if (pausedPostsRef.current[postId]) {
+        return;
+      }
+
+      if (photoStartedAtRef.current[postId] === 0) {
+        photoStartedAtRef.current[postId] =
+          Date.now() -
+          (photoElapsedRef.current[postId] || 0);
+      }
+
+      photoTimerRef.current[postId] =
+        window.setInterval(() => {
+          if (pausedPostsRef.current[postId]) {
+            return;
+          }
+
+          const started =
+            photoStartedAtRef.current[postId];
+
+          if (!started) {
+            return;
+          }
+
+          const elapsed = Date.now() - started;
+
+          if (elapsed >= PHOTO_DURATION_MS) {
+            clearPhotoTimer(postId);
+
+            photoElapsedRef.current[postId] =
+              PHOTO_DURATION_MS;
+
+            const index = posts.findIndex(
+              (post) => post.id === postId,
+            );
+
+            if (index !== -1) {
+              goNext(index);
+            }
+          }
+        }, 50);
+    },
+    [clearPhotoTimer, goNext, posts],
+  );
+
+  /**
+   * Pause / Resume.
+   */
+  const togglePause = useCallback(
+    (post: Post) => {
+      const currentlyPaused = Boolean(
+        pausedPostsRef.current[post.id],
+      );
+
+      /**
+       * VIDEO
+       */
+      if (post.media_type === "video") {
+        const video = videoRefs.current[post.id];
+
+        if (video) {
+          if (currentlyPaused) {
+            video
+              .play()
+              .catch(() => {});
+          } else {
+            video.pause();
+          }
+        }
+
+        const nextPaused = !currentlyPaused;
+
+        pausedPostsRef.current = {
+          ...pausedPostsRef.current,
+          [post.id]: nextPaused,
+        };
+
+        setPausedPosts((prev) => ({
+          ...prev,
+          [post.id]: nextPaused,
+        }));
+
+        return;
+      }
+
+      /**
+       * PHOTO
+       */
+      if (currentlyPaused) {
+        pausedPostsRef.current = {
+          ...pausedPostsRef.current,
+          [post.id]: false,
+        };
+
+        setPausedPosts((prev) => ({
+          ...prev,
+          [post.id]: false,
+        }));
+
+        startPhotoTimer(post.id);
+
+        return;
+      }
+
+      const started =
+        photoStartedAtRef.current[post.id];
+
+      if (started) {
+        photoElapsedRef.current[post.id] =
+          Date.now() - started;
+      }
+
+      clearPhotoTimer(post.id);
+
+      pausedPostsRef.current = {
+        ...pausedPostsRef.current,
+        [post.id]: true,
+      };
+
       setPausedPosts((prev) => ({
         ...prev,
-        [post.id]: false,
+        [post.id]: true,
       }));
-
-      return;
-    }
-
-    if (
-      photoStartedAtRef.current[
-        post.id
-      ] !== 0
-    ) {
-      photoElapsedRef.current[
-        post.id
-      ] =
-        Date.now() -
-        photoStartedAtRef.current[
-          post.id
-        ];
-    }
-
-    clearPhotoTimer(post.id);
-
-    setPausedPosts((prev) => ({
-      ...prev,
-      [post.id]: true,
-    }));
-  };
+    },
+    [clearPhotoTimer, startPhotoTimer],
+  );
 
   /**
    * Centre media gesture:
    *
    * Single tap  -> Pause / Resume
-   * Double tap  -> Love
+   * Double tap  -> Love / Unlike
    */
-  const handleMediaTap = (
-    post: Post,
-  ) => {
-    const now = Date.now();
+  const handleMediaTap = useCallback(
+    (post: Post) => {
+      const now = Date.now();
 
-    const previousTap =
-      lastTapRef.current[
-        post.id
-      ] || 0;
+      const previousTap =
+        lastTapRef.current[post.id] || 0;
 
-    const isDoubleTap =
-      now - previousTap <=
-      DOUBLE_TAP_DELAY_MS;
+      const isDoubleTap =
+        now - previousTap <=
+        DOUBLE_TAP_DELAY_MS;
 
-    if (isDoubleTap) {
-      lastTapRef.current[
-        post.id
-      ] = 0;
+      if (isDoubleTap) {
+        lastTapRef.current[post.id] = 0;
 
-      /**
-       * Double tap = Love.
-       */
-      handleLike(post);
+        const timer =
+          tapTimerRef.current[post.id];
 
-      return;
-    }
+        if (timer !== undefined) {
+          window.clearTimeout(timer);
+          delete tapTimerRef.current[post.id];
+        }
 
-    lastTapRef.current[
-      post.id
-    ] = now;
+        /**
+         * Double tap = Love.
+         */
+        void handleLike(post);
 
-    window.setTimeout(() => {
-      const latestTap =
-        lastTapRef.current[
-          post.id
-        ];
-
-      if (latestTap !== now) {
         return;
       }
 
-      lastTapRef.current[
-        post.id
-      ] = 0;
+      lastTapRef.current[post.id] = now;
 
-      /**
-       * Single tap = Pause.
-       */
-      togglePause(post);
-    }, DOUBLE_TAP_DELAY_MS);
-  };
+      const timer = window.setTimeout(() => {
+        const latestTap =
+          lastTapRef.current[post.id];
 
-  /**
-   * Go to next Rush.
-   */
-  const goNext = (
-    currentIndex: number,
-  ) => {
-    if (
-      currentIndex >=
-      posts.length - 1
-    ) {
-      return;
-    }
+        if (latestTap !== now) {
+          return;
+        }
 
-    const current =
-      posts[currentIndex];
+        lastTapRef.current[post.id] = 0;
 
-    const next =
-      posts[currentIndex + 1];
+        /**
+         * Single tap = Pause / Resume.
+         */
+        togglePause(post);
 
-    resetPlayback(current.id);
+        delete tapTimerRef.current[post.id];
+      }, DOUBLE_TAP_DELAY_MS);
 
-    if (next) {
-      resetPlayback(next.id);
-
-      const element =
-        document.getElementById(
-          `rush-${next.id}`,
-        );
-
-      element?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }
-  };
+      tapTimerRef.current[post.id] = timer;
+    },
+    [handleLike, togglePause],
+  );
 
   /**
-   * Observe which Rush is currently
-   * visible.
+   * IntersectionObserver:
+   * only the visible Rush plays.
    */
   useEffect(() => {
     if (!posts.length) {
@@ -592,103 +577,80 @@ export function Rush() {
     const observer =
       new IntersectionObserver(
         (entries) => {
-          entries.forEach(
-            (entry) => {
-              const postId =
-                entry.target.getAttribute(
-                  "data-rush-id",
-                );
+          entries.forEach((entry) => {
+            const postId =
+              entry.target.getAttribute(
+                "data-rush-id",
+              );
 
-              if (!postId) return;
+            if (!postId) {
+              return;
+            }
 
-              const post =
-                posts.find(
-                  (item) =>
-                    item.id ===
-                    postId,
-                );
+            const post = posts.find(
+              (item) => item.id === postId,
+            );
 
-              if (!post) return;
+            if (!post) {
+              return;
+            }
 
-              if (
-                entry.isIntersecting &&
-                entry.intersectionRatio >=
-                  0.6
-              ) {
-                /**
-                 * VIDEO
-                 */
-                if (
-                  post.media_type ===
-                  "video"
-                ) {
-                  const video =
-                    videoRefs.current[
-                      post.id
-                    ];
+            const isVisible =
+              entry.isIntersecting &&
+              entry.intersectionRatio >= 0.6;
 
-                  if (
-                    video &&
-                    !pausedPosts[
-                      post.id
-                    ]
-                  ) {
-                    video
-                      .play()
-                      .catch(
-                        () => {},
-                      );
-                  }
-                } else {
-                  /**
-                   * PHOTO
-                   */
-                  if (
-                    !pausedPosts[
-                      post.id
-                    ]
-                  ) {
-                    startPhotoTimer(
-                      post.id,
-                      () => {
-                        const index =
-                          posts.findIndex(
-                            (item) =>
-                              item.id ===
-                              post.id,
-                          );
-
-                        if (
-                          index !==
-                          -1
-                        ) {
-                          goNext(
-                            index,
-                          );
-                        }
-                      },
-                    );
-                  }
-                }
-              } else {
+            if (isVisible) {
+              /**
+               * VIDEO
+               */
+              if (post.media_type === "video") {
                 const video =
-                  videoRefs.current[
-                    post.id
-                  ];
+                  videoRefs.current[post.id];
 
-                if (video) {
-                  video.pause();
+                if (
+                  video &&
+                  !pausedPostsRef.current[
+                    post.id
+                  ]
+                ) {
+                  video
+                    .play()
+                    .catch(() => {});
                 }
 
-                clearPhotoTimer(
-                  post.id,
-                );
+                return;
               }
-            },
-          );
+
+              /**
+               * PHOTO
+               */
+              if (
+                !pausedPostsRef.current[
+                  post.id
+                ]
+              ) {
+                startPhotoTimer(post.id);
+              }
+
+              return;
+            }
+
+            /**
+             * Not visible:
+             * stop playback.
+             */
+            const video =
+              videoRefs.current[post.id];
+
+            if (video) {
+              video.pause();
+            }
+
+            clearPhotoTimer(post.id);
+          });
         },
         {
-          threshold: 0.6,
+          threshold: [0.6],
         },
       );
 
@@ -712,31 +674,49 @@ export function Rush() {
         clearPhotoTimer(postId);
       });
     };
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [posts]);
+  }, [
+    posts,
+    clearPhotoTimer,
+    startPhotoTimer,
+  ]);
 
   /**
-   * Keep videos synchronized with
-   * muted / paused state.
+   * Synchronize mute state with every video.
    */
   useEffect(() => {
-    Object.entries(
-      videoRefs.current,
-    ).forEach(
+    Object.entries(videoRefs.current).forEach(
       ([postId, video]) => {
-        if (!video) return;
+        if (!video) {
+          return;
+        }
 
         video.muted = muted;
 
-        if (
-          pausedPosts[postId]
-        ) {
+        if (pausedPostsRef.current[postId]) {
           video.pause();
         }
       },
     );
-  }, [muted, pausedPosts]);
+  }, [muted]);
+
+  /**
+   * Cleanup tap timers when component unmounts.
+   */
+  useEffect(() => {
+    return () => {
+      Object.values(
+        tapTimerRef.current,
+      ).forEach((timer) => {
+        window.clearTimeout(timer);
+      });
+
+      Object.values(
+        photoTimerRef.current,
+      ).forEach((timer) => {
+        window.clearInterval(timer);
+      });
+    };
+  }, []);
 
   if (isLoading) {
     return (
@@ -746,10 +726,7 @@ export function Rush() {
     );
   }
 
-  if (
-    error ||
-    posts.length === 0
-  ) {
+  if (error || posts.length === 0) {
     return (
       <AppLayout>
         <EmptyState
@@ -779,30 +756,21 @@ export function Rush() {
                 post.media?.[0]?.url,
               );
 
-            const isPaused =
-              Boolean(
-                pausedPosts[
-                  post.id
-                ],
-              );
+            const isPaused = Boolean(
+              pausedPosts[post.id],
+            );
 
             return (
               <div
                 key={post.id}
                 id={`rush-${post.id}`}
                 data-rush-id={post.id}
-                className={
-                  styles.slide
-                }
+                className={styles.slide}
               >
                 <div
-                  className={
-                    styles.mediaArea
-                  }
+                  className={styles.mediaArea}
                   onClick={() =>
-                    handleMediaTap(
-                      post,
-                    )
+                    handleMediaTap(post)
                   }
                 >
                   {mediaUrl ? (
@@ -812,19 +780,29 @@ export function Rush() {
                         ref={(element) => {
                           videoRefs.current[
                             post.id
-                          ] =
-                            element;
+                          ] = element;
                         }}
                         className={
                           styles.rushMedia
                         }
                         src={mediaUrl}
                         autoPlay
-                        loop={false}
                         muted={muted}
                         playsInline
                         controls={false}
                         preload="auto"
+                        onEnded={() => {
+                          const index =
+                            posts.findIndex(
+                              (item) =>
+                                item.id ===
+                                post.id,
+                            );
+
+                          if (index !== -1) {
+                            goNext(index);
+                          }
+                        }}
                       />
                     ) : (
                       <img
@@ -836,9 +814,7 @@ export function Rush() {
                           post.caption ||
                           "Rush"
                         }
-                        draggable={
-                          false
-                        }
+                        draggable={false}
                       />
                     )
                   ) : (
@@ -849,9 +825,7 @@ export function Rush() {
                     />
                   )}
 
-                  {/* =================================================
-                      SPEAKER BUTTON
-                      ================================================= */}
+                  {/* Speaker */}
                   {post.media_type ===
                     "video" && (
                     <button
@@ -874,16 +848,12 @@ export function Rush() {
                       }
                     >
                       <SpeakerIcon
-                        muted={
-                          muted
-                        }
+                        muted={muted}
                       />
                     </button>
                   )}
 
-                  {/* =================================================
-                      PAUSE INDICATOR
-                      ================================================= */}
+                  {/* Pause indicator */}
                   {isPaused && (
                     <div
                       style={{
@@ -916,6 +886,7 @@ export function Rush() {
                   )}
                 </div>
 
+                {/* Top overlay */}
                 <div
                   className={
                     styles.topOverlay
@@ -930,6 +901,7 @@ export function Rush() {
                   </span>
                 </div>
 
+                {/* Bottom overlay */}
                 <div
                   className={
                     styles.bottomOverlay
@@ -986,17 +958,19 @@ export function Rush() {
                   )}
                 </div>
 
+                {/* Actions */}
                 <div
                   className={
                     styles.actionsRail
                   }
                 >
                   <button
+                    type="button"
                     className={
                       styles.actionBtn
                     }
                     onClick={() =>
-                      handleLike(
+                      void handleLike(
                         post,
                       )
                     }
@@ -1017,6 +991,7 @@ export function Rush() {
                   </button>
 
                   <button
+                    type="button"
                     className={
                       styles.actionBtn
                     }
@@ -1039,6 +1014,7 @@ export function Rush() {
                   </button>
 
                   <button
+                    type="button"
                     className={
                       styles.actionBtn
                     }
@@ -1059,11 +1035,12 @@ export function Rush() {
                   </button>
 
                   <button
+                    type="button"
                     className={
                       styles.actionBtn
                     }
                     onClick={() =>
-                      handleKeep(
+                      void handleKeep(
                         post,
                       )
                     }
