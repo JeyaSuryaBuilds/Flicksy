@@ -308,9 +308,6 @@ export function Rush() {
 
   /**
    * Open Share Sheet.
-   *
-   * IMPORTANT:
-   * This no longer copies the link.
    */
   const handleSendOn = useCallback(
     (post: Post) => {
@@ -381,6 +378,9 @@ export function Rush() {
 
   /**
    * Move to next Rush.
+   *
+   * This is still used for photo Rushes.
+   * Video Rushes now loop themselves.
    */
   const goNext = useCallback(
     (currentIndex: number) => {
@@ -721,6 +721,10 @@ export function Rush() {
               if (isVisible) {
                 /**
                  * VIDEO
+                 *
+                 * Always resume the video
+                 * when it becomes visible,
+                 * unless user explicitly paused it.
                  */
                 if (
                   post.media_type ===
@@ -935,24 +939,11 @@ export function Rush() {
                         }
                         src={mediaUrl}
                         autoPlay
+                        loop
                         muted={muted}
                         playsInline
                         controls={false}
                         preload="auto"
-                        onEnded={() => {
-                          const index =
-                            posts.findIndex(
-                              (item) =>
-                                item.id ===
-                                post.id,
-                            );
-
-                          if (
-                            index !== -1
-                          ) {
-                            goNext(index);
-                          }
-                        }}
                       />
                     ) : (
                       <img
