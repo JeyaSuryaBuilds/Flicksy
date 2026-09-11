@@ -15,6 +15,7 @@ import {
 import * as rushApi from "../services/rush";
 import * as postsApi from "../services/posts";
 import { CommentsSheet } from "../components/CommentsSheet";
+import { RushShareSheet } from "../components/RushShareSheet";
 import { useToast } from "../components/Toast";
 import type { Post } from "../types";
 import styles from "./Rush.module.css";
@@ -30,7 +31,8 @@ function resolveMediaUrl(mediaUrl?: string | null): string {
   }
 
   const apiBaseUrl = (
-    import.meta.env.VITE_API_URL || "http://localhost:8000"
+    import.meta.env.VITE_API_URL ||
+    "http://localhost:8000"
   ).replace(/\/+$/, "");
 
   const normalizedPath = mediaUrl.startsWith("/")
@@ -108,8 +110,20 @@ function PauseIcon() {
         fill: "currentColor",
       }}
     >
-      <rect x="7" y="5" width="3.5" height="14" rx="1" />
-      <rect x="13.5" y="5" width="3.5" height="14" rx="1" />
+      <rect
+        x="7"
+        y="5"
+        width="3.5"
+        height="14"
+        rx="1"
+      />
+      <rect
+        x="13.5"
+        y="5"
+        width="3.5"
+        height="14"
+        rx="1"
+      />
     </svg>
   );
 }
@@ -118,7 +132,14 @@ export function Rush() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [activePost, setActivePost] = useState<Post | null>(null);
+  const [activePost, setActivePost] =
+    useState<Post | null>(null);
+
+  /**
+   * Post selected for Share Sheet.
+   */
+  const [sharePost, setSharePost] =
+    useState<Post | null>(null);
 
   /**
    * Rush videos start with sound ON.
@@ -128,32 +149,40 @@ export function Rush() {
   /**
    * Pause state per Rush.
    */
-  const [pausedPosts, setPausedPosts] = useState<
-    Record<string, boolean>
-  >({});
+  const [pausedPosts, setPausedPosts] =
+    useState<Record<string, boolean>>({});
 
   /**
-   * Keep a ref in sync with pausedPosts.
-   * This prevents IntersectionObserver from using stale state.
+   * Keep paused state in a ref so that
+   * IntersectionObserver always has the
+   * latest value.
    */
-  const pausedPostsRef = useRef<Record<string, boolean>>({});
+  const pausedPostsRef =
+    useRef<Record<string, boolean>>({});
 
   /**
    * Double-tap detection.
    */
-  const lastTapRef = useRef<Record<string, number>>({});
+  const lastTapRef =
+    useRef<Record<string, number>>({});
 
   /**
    * Pending single-tap timers.
    */
-  const tapTimerRef = useRef<Record<string, number>>({});
+  const tapTimerRef =
+    useRef<Record<string, number>>({});
 
   /**
    * Photo timing.
    */
-  const photoStartedAtRef = useRef<Record<string, number>>({});
-  const photoElapsedRef = useRef<Record<string, number>>({});
-  const photoTimerRef = useRef<Record<string, number>>({});
+  const photoStartedAtRef =
+    useRef<Record<string, number>>({});
+
+  const photoElapsedRef =
+    useRef<Record<string, number>>({});
+
+  const photoTimerRef =
+    useRef<Record<string, number>>({});
 
   /**
    * Video references.
@@ -165,7 +194,7 @@ export function Rush() {
   const { showToast } = useToast();
 
   /**
-   * Keep pausedPosts ref synchronized.
+   * Sync pause state ref.
    */
   useEffect(() => {
     pausedPostsRef.current = pausedPosts;
@@ -201,7 +230,10 @@ export function Rush() {
   }, []);
 
   const updatePost = useCallback(
-    (postId: string, patch: Partial<Post>) => {
+    (
+      postId: string,
+      patch: Partial<Post>,
+    ) => {
       setPosts((prev) =>
         prev.map((post) =>
           post.id === postId
@@ -223,7 +255,8 @@ export function Rush() {
       updatePost(post.id, {
         is_liked: !wasLiked,
         like_count:
-          post.like_count + (wasLiked ? -1 : 1),
+          post.like_count +
+          (wasLiked ? -1 : 1),
       });
 
       try {
@@ -247,7 +280,8 @@ export function Rush() {
    */
   const handleKeep = useCallback(
     async (post: Post) => {
-      const wasKept = post.is_bookmarked;
+      const wasKept =
+        post.is_bookmarked;
 
       updatePost(post.id, {
         is_bookmarked: !wasKept,
@@ -255,9 +289,13 @@ export function Rush() {
 
       try {
         if (wasKept) {
-          await postsApi.unbookmarkPost(post.id);
+          await postsApi.unbookmarkPost(
+            post.id,
+          );
         } else {
-          await postsApi.bookmarkPost(post.id);
+          await postsApi.bookmarkPost(
+            post.id,
+          );
         }
       } catch {
         updatePost(post.id, {
@@ -269,24 +307,16 @@ export function Rush() {
   );
 
   /**
-   * Send On.
+   * Open Share Sheet.
+   *
+   * IMPORTANT:
+   * This no longer copies the link.
    */
   const handleSendOn = useCallback(
     (post: Post) => {
-      const link = `${window.location.origin}/r/${post.id}`;
-
-      if (navigator.clipboard) {
-        navigator.clipboard
-          .writeText(link)
-          .catch(() => {});
-      }
-
-      showToast(
-        "Link copied — ready to Send On",
-        "success",
-      );
+      setSharePost(post);
     },
-    [showToast],
+    [],
   );
 
   /**
@@ -294,25 +324,34 @@ export function Rush() {
    */
   const clearPhotoTimer = useCallback(
     (postId: string) => {
-      const timer = photoTimerRef.current[postId];
+      const timer =
+        photoTimerRef.current[postId];
 
       if (timer !== undefined) {
         window.clearInterval(timer);
-        delete photoTimerRef.current[postId];
+
+        delete photoTimerRef.current[
+          postId
+        ];
       }
     },
     [],
   );
 
   /**
-   * Reset playback state.
+   * Reset playback.
    */
   const resetPlayback = useCallback(
     (postId: string) => {
       clearPhotoTimer(postId);
 
-      photoStartedAtRef.current[postId] = 0;
-      photoElapsedRef.current[postId] = 0;
+      photoStartedAtRef.current[
+        postId
+      ] = 0;
+
+      photoElapsedRef.current[
+        postId
+      ] = 0;
 
       pausedPostsRef.current = {
         ...pausedPostsRef.current,
@@ -324,7 +363,8 @@ export function Rush() {
         [postId]: false,
       }));
 
-      const video = videoRefs.current[postId];
+      const video =
+        videoRefs.current[postId];
 
       if (video) {
         video.pause();
@@ -344,12 +384,18 @@ export function Rush() {
    */
   const goNext = useCallback(
     (currentIndex: number) => {
-      if (currentIndex >= posts.length - 1) {
+      if (
+        currentIndex >=
+        posts.length - 1
+      ) {
         return;
       }
 
-      const current = posts[currentIndex];
-      const next = posts[currentIndex + 1];
+      const current =
+        posts[currentIndex];
+
+      const next =
+        posts[currentIndex + 1];
 
       if (current) {
         resetPlayback(current.id);
@@ -358,9 +404,10 @@ export function Rush() {
       if (next) {
         resetPlayback(next.id);
 
-        const element = document.getElementById(
-          `rush-${next.id}`,
-        );
+        const element =
+          document.getElementById(
+            `rush-${next.id}`,
+          );
 
         element?.scrollIntoView({
           behavior: "smooth",
@@ -378,48 +425,80 @@ export function Rush() {
     (postId: string) => {
       clearPhotoTimer(postId);
 
-      if (pausedPostsRef.current[postId]) {
+      if (
+        pausedPostsRef.current[
+          postId
+        ]
+      ) {
         return;
       }
 
-      if (photoStartedAtRef.current[postId] === 0) {
-        photoStartedAtRef.current[postId] =
+      if (
+        photoStartedAtRef.current[
+          postId
+        ] === 0
+      ) {
+        photoStartedAtRef.current[
+          postId
+        ] =
           Date.now() -
-          (photoElapsedRef.current[postId] || 0);
+          (
+            photoElapsedRef.current[
+              postId
+            ] || 0
+          );
       }
 
-      photoTimerRef.current[postId] =
-        window.setInterval(() => {
-          if (pausedPostsRef.current[postId]) {
-            return;
-          }
+      photoTimerRef.current[
+        postId
+      ] = window.setInterval(() => {
+        if (
+          pausedPostsRef.current[
+            postId
+          ]
+        ) {
+          return;
+        }
 
-          const started =
-            photoStartedAtRef.current[postId];
+        const started =
+          photoStartedAtRef.current[
+            postId
+          ];
 
-          if (!started) {
-            return;
-          }
+        if (!started) {
+          return;
+        }
 
-          const elapsed = Date.now() - started;
+        const elapsed =
+          Date.now() - started;
 
-          if (elapsed >= PHOTO_DURATION_MS) {
-            clearPhotoTimer(postId);
+        if (
+          elapsed >=
+          PHOTO_DURATION_MS
+        ) {
+          clearPhotoTimer(postId);
 
-            photoElapsedRef.current[postId] =
-              PHOTO_DURATION_MS;
+          photoElapsedRef.current[
+            postId
+          ] = PHOTO_DURATION_MS;
 
-            const index = posts.findIndex(
-              (post) => post.id === postId,
+          const index =
+            posts.findIndex(
+              (post) =>
+                post.id === postId,
             );
 
-            if (index !== -1) {
-              goNext(index);
-            }
+          if (index !== -1) {
+            goNext(index);
           }
-        }, 50);
+        }
+      }, 50);
     },
-    [clearPhotoTimer, goNext, posts],
+    [
+      clearPhotoTimer,
+      goNext,
+      posts,
+    ],
   );
 
   /**
@@ -427,36 +506,48 @@ export function Rush() {
    */
   const togglePause = useCallback(
     (post: Post) => {
-      const currentlyPaused = Boolean(
-        pausedPostsRef.current[post.id],
-      );
+      const currentlyPaused =
+        Boolean(
+          pausedPostsRef.current[
+            post.id
+          ],
+        );
 
       /**
        * VIDEO
        */
-      if (post.media_type === "video") {
-        const video = videoRefs.current[post.id];
+      if (
+        post.media_type ===
+        "video"
+      ) {
+        const video =
+          videoRefs.current[
+            post.id
+          ];
+
+        const nextPaused =
+          !currentlyPaused;
 
         if (video) {
-          if (currentlyPaused) {
+          if (nextPaused) {
+            video.pause();
+          } else {
             video
               .play()
               .catch(() => {});
-          } else {
-            video.pause();
           }
         }
 
-        const nextPaused = !currentlyPaused;
-
         pausedPostsRef.current = {
           ...pausedPostsRef.current,
-          [post.id]: nextPaused,
+          [post.id]:
+            nextPaused,
         };
 
         setPausedPosts((prev) => ({
           ...prev,
-          [post.id]: nextPaused,
+          [post.id]:
+            nextPaused,
         }));
 
         return;
@@ -482,10 +573,14 @@ export function Rush() {
       }
 
       const started =
-        photoStartedAtRef.current[post.id];
+        photoStartedAtRef.current[
+          post.id
+        ];
 
       if (started) {
-        photoElapsedRef.current[post.id] =
+        photoElapsedRef.current[
+          post.id
+        ] =
           Date.now() - started;
       }
 
@@ -501,11 +596,14 @@ export function Rush() {
         [post.id]: true,
       }));
     },
-    [clearPhotoTimer, startPhotoTimer],
+    [
+      clearPhotoTimer,
+      startPhotoTimer,
+    ],
   );
 
   /**
-   * Centre media gesture:
+   * Centre gesture:
    *
    * Single tap  -> Pause / Resume
    * Double tap  -> Love / Unlike
@@ -515,59 +613,75 @@ export function Rush() {
       const now = Date.now();
 
       const previousTap =
-        lastTapRef.current[post.id] || 0;
+        lastTapRef.current[
+          post.id
+        ] || 0;
 
       const isDoubleTap =
         now - previousTap <=
         DOUBLE_TAP_DELAY_MS;
 
       if (isDoubleTap) {
-        lastTapRef.current[post.id] = 0;
+        lastTapRef.current[
+          post.id
+        ] = 0;
 
         const timer =
-          tapTimerRef.current[post.id];
+          tapTimerRef.current[
+            post.id
+          ];
 
         if (timer !== undefined) {
           window.clearTimeout(timer);
-          delete tapTimerRef.current[post.id];
+
+          delete tapTimerRef.current[
+            post.id
+          ];
         }
 
-        /**
-         * Double tap = Love.
-         */
         void handleLike(post);
 
         return;
       }
 
-      lastTapRef.current[post.id] = now;
+      lastTapRef.current[
+        post.id
+      ] = now;
 
-      const timer = window.setTimeout(() => {
-        const latestTap =
-          lastTapRef.current[post.id];
+      const timer =
+        window.setTimeout(() => {
+          const latestTap =
+            lastTapRef.current[
+              post.id
+            ];
 
-        if (latestTap !== now) {
-          return;
-        }
+          if (latestTap !== now) {
+            return;
+          }
 
-        lastTapRef.current[post.id] = 0;
+          lastTapRef.current[
+            post.id
+          ] = 0;
 
-        /**
-         * Single tap = Pause / Resume.
-         */
-        togglePause(post);
+          togglePause(post);
 
-        delete tapTimerRef.current[post.id];
-      }, DOUBLE_TAP_DELAY_MS);
+          delete tapTimerRef.current[
+            post.id
+          ];
+        }, DOUBLE_TAP_DELAY_MS);
 
-      tapTimerRef.current[post.id] = timer;
+      tapTimerRef.current[
+        post.id
+      ] = timer;
     },
-    [handleLike, togglePause],
+    [
+      handleLike,
+      togglePause,
+    ],
   );
 
   /**
-   * IntersectionObserver:
-   * only the visible Rush plays.
+   * Observe visible Rush.
    */
   useEffect(() => {
     if (!posts.length) {
@@ -577,77 +691,93 @@ export function Rush() {
     const observer =
       new IntersectionObserver(
         (entries) => {
-          entries.forEach((entry) => {
-            const postId =
-              entry.target.getAttribute(
-                "data-rush-id",
-              );
+          entries.forEach(
+            (entry) => {
+              const postId =
+                entry.target.getAttribute(
+                  "data-rush-id",
+                );
 
-            if (!postId) {
-              return;
-            }
+              if (!postId) {
+                return;
+              }
 
-            const post = posts.find(
-              (item) => item.id === postId,
-            );
+              const post =
+                posts.find(
+                  (item) =>
+                    item.id ===
+                    postId,
+                );
 
-            if (!post) {
-              return;
-            }
+              if (!post) {
+                return;
+              }
 
-            const isVisible =
-              entry.isIntersecting &&
-              entry.intersectionRatio >= 0.6;
+              const isVisible =
+                entry.isIntersecting &&
+                entry.intersectionRatio >=
+                  0.6;
 
-            if (isVisible) {
-              /**
-               * VIDEO
-               */
-              if (post.media_type === "video") {
-                const video =
-                  videoRefs.current[post.id];
-
+              if (isVisible) {
+                /**
+                 * VIDEO
+                 */
                 if (
-                  video &&
+                  post.media_type ===
+                  "video"
+                ) {
+                  const video =
+                    videoRefs.current[
+                      post.id
+                    ];
+
+                  if (
+                    video &&
+                    !pausedPostsRef.current[
+                      post.id
+                    ]
+                  ) {
+                    video
+                      .play()
+                      .catch(() => {});
+                  }
+
+                  return;
+                }
+
+                /**
+                 * PHOTO
+                 */
+                if (
                   !pausedPostsRef.current[
                     post.id
                   ]
                 ) {
-                  video
-                    .play()
-                    .catch(() => {});
+                  startPhotoTimer(
+                    post.id,
+                  );
                 }
 
                 return;
               }
 
               /**
-               * PHOTO
+               * Not visible.
                */
-              if (
-                !pausedPostsRef.current[
+              const video =
+                videoRefs.current[
                   post.id
-                ]
-              ) {
-                startPhotoTimer(post.id);
+                ];
+
+              if (video) {
+                video.pause();
               }
 
-              return;
-            }
-
-            /**
-             * Not visible:
-             * stop playback.
-             */
-            const video =
-              videoRefs.current[post.id];
-
-            if (video) {
-              video.pause();
-            }
-
-            clearPhotoTimer(post.id);
-          });
+              clearPhotoTimer(
+                post.id,
+              );
+            },
+          );
         },
         {
           threshold: [0.6],
@@ -681,10 +811,12 @@ export function Rush() {
   ]);
 
   /**
-   * Synchronize mute state with every video.
+   * Synchronize mute state.
    */
   useEffect(() => {
-    Object.entries(videoRefs.current).forEach(
+    Object.entries(
+      videoRefs.current,
+    ).forEach(
       ([postId, video]) => {
         if (!video) {
           return;
@@ -692,7 +824,11 @@ export function Rush() {
 
         video.muted = muted;
 
-        if (pausedPostsRef.current[postId]) {
+        if (
+          pausedPostsRef.current[
+            postId
+          ]
+        ) {
           video.pause();
         }
       },
@@ -700,7 +836,7 @@ export function Rush() {
   }, [muted]);
 
   /**
-   * Cleanup tap timers when component unmounts.
+   * Cleanup.
    */
   useEffect(() => {
     return () => {
@@ -726,7 +862,10 @@ export function Rush() {
     );
   }
 
-  if (error || posts.length === 0) {
+  if (
+    error ||
+    posts.length === 0
+  ) {
     return (
       <AppLayout>
         <EmptyState
@@ -756,21 +895,30 @@ export function Rush() {
                 post.media?.[0]?.url,
               );
 
-            const isPaused = Boolean(
-              pausedPosts[post.id],
-            );
+            const isPaused =
+              Boolean(
+                pausedPosts[
+                  post.id
+                ],
+              );
 
             return (
               <div
                 key={post.id}
                 id={`rush-${post.id}`}
                 data-rush-id={post.id}
-                className={styles.slide}
+                className={
+                  styles.slide
+                }
               >
                 <div
-                  className={styles.mediaArea}
+                  className={
+                    styles.mediaArea
+                  }
                   onClick={() =>
-                    handleMediaTap(post)
+                    handleMediaTap(
+                      post,
+                    )
                   }
                 >
                   {mediaUrl ? (
@@ -799,7 +947,9 @@ export function Rush() {
                                 post.id,
                             );
 
-                          if (index !== -1) {
+                          if (
+                            index !== -1
+                          ) {
                             goNext(index);
                           }
                         }}
@@ -848,7 +998,9 @@ export function Rush() {
                       }
                     >
                       <SpeakerIcon
-                        muted={muted}
+                        muted={
+                          muted
+                        }
                       />
                     </button>
                   )}
@@ -1063,6 +1215,7 @@ export function Rush() {
           })}
         </div>
 
+        {/* Echo / Comments */}
         {activePost && (
           <CommentsSheet
             post={activePost}
@@ -1079,6 +1232,23 @@ export function Rush() {
                     count,
                 },
               )
+            }
+          />
+        )}
+
+        {/* Rush Share Sheet */}
+        {sharePost && (
+          <RushShareSheet
+            isOpen={true}
+            onClose={() =>
+              setSharePost(null)
+            }
+            postId={sharePost.id}
+            mediaUrl={resolveMediaUrl(
+              sharePost.media?.[0]?.url,
+            )}
+            caption={
+              sharePost.caption
             }
           />
         )}

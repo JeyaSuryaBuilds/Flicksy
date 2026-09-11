@@ -131,6 +131,13 @@
   -webkit-user-drag: none;
 }
 
+@media (min-width: 768px) {
+  .rushMedia {
+    object-fit: cover;
+    object-position: center;
+  }
+}
+
 /*
  * Video itself should not steal the tap that controls
  * mute/unmute on the media area.

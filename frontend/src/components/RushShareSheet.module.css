@@ -1,0 +1,244 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.58);
+  animation: fadeIn 180ms ease-out;
+}
+
+.sheet {
+  width: min(100%, 620px);
+  max-height: min(78vh, 720px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #17191d;
+  color: #fff;
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.35);
+  animation: slideUp 220ms ease-out;
+}
+
+.handle {
+  width: 42px;
+  height: 4px;
+  margin: 10px auto 4px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.42);
+  flex: 0 0 auto;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 18px 14px;
+}
+
+.header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.closeButton {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  cursor: pointer;
+}
+
+.searchWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 16px 14px;
+  padding: 0 14px;
+  min-height: 48px;
+  border-radius: 14px;
+  background: #292d34;
+  color: #9da3ad;
+}
+
+.searchWrap input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-size: 16px;
+}
+
+.searchWrap input::placeholder {
+  color: #969ca6;
+}
+
+.recipientArea {
+  min-height: 145px;
+  max-height: 330px;
+  overflow-y: auto;
+  padding: 2px 16px 12px;
+}
+
+.recipientGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(62px, 1fr));
+  gap: 16px 10px;
+}
+
+.recipient,
+.recipientSelected {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  padding: 2px;
+}
+
+.avatarWrap {
+  position: relative;
+}
+
+.recipientSelected .avatarWrap {
+  transform: scale(0.94);
+}
+
+.selectedBadge {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 21px;
+  height: 21px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #ff7a00;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  border: 2px solid #17191d;
+}
+
+.username {
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+  font-size: 12px;
+  color: #e8e9eb;
+}
+
+.status {
+  min-height: 145px;
+  display: grid;
+  place-items: center;
+  color: #9da3ad;
+  font-size: 14px;
+}
+
+.sendButton {
+  margin: 0 16px 12px;
+  min-height: 46px;
+  border: 0;
+  border-radius: 14px;
+  background: #ff7a00;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sendButton:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.actionRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  padding: 14px 10px calc(18px + env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  background: #1b1e23;
+}
+
+.action {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 3px;
+  border: 0;
+  background: transparent;
+  color: #f4f5f6;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.actionIcon {
+  width: 50px;
+  height: 50px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #2b2f36;
+  color: #fff;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 480px) {
+  .sheet {
+    max-height: 82vh;
+  }
+
+  .recipientGrid {
+    grid-template-columns: repeat(4, minmax(62px, 1fr));
+  }
+
+  .actionIcon {
+    width: 46px;
+    height: 46px;
+  }
+}
+
+@media (max-width: 360px) {
+  .recipientGrid {
+    grid-template-columns: repeat(3, minmax(62px, 1fr));
+  }
+}
