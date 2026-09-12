@@ -23,18 +23,81 @@
   padding: 28px 26px 36px;
 }
 
+/* Desktop-only branding pane — display:none on mobile so it never affects
+   the existing mobile layout; only unhidden at the desktop breakpoint below. */
+.brandPane {
+  display: none;
+}
+
 @media (min-width: 768px) {
   .stage {
     background: #0a0906;
-    padding: 40px 0;
+    padding: 0;
+    align-items: stretch;
   }
+
   .frame {
-    width: 440px;
-    min-height: 780px;
-    border-radius: 40px;
-    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
+    width: 100%;
+    max-width: 1120px;
+    min-height: 100vh;
+    margin: 0 auto;
+    border-radius: 0;
+    box-shadow: none;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
+
+  .brandPane {
+    display: flex;
+    position: relative;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: linear-gradient(160deg, #2a1712 0%, #1a1712 55%, #120f0b 100%);
+    z-index: 1;
+  }
+
+  .brandGlow {
+    position: absolute;
+    top: -140px;
+    right: -120px;
+    width: 420px;
+    height: 420px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, rgba(255, 107, 74, 0.38), rgba(255, 107, 74, 0) 70%);
+    pointer-events: none;
+  }
+
+  .brandContent {
+    position: relative;
+    max-width: 340px;
+    padding: 0 48px;
+  }
+
+  .brandWordmark {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 34px;
+    color: var(--color-cream);
+  }
+
+  .brandWordmark span {
+    color: var(--color-coral);
+  }
+
+  .brandTagline {
+    margin-top: 14px;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--color-muted);
+  }
+
   .content {
-    min-height: 780px;
+    min-height: 100vh;
+    max-width: 400px;
+    width: 100%;
+    margin: 0 auto;
+    justify-content: center;
+    padding: 48px 32px;
   }
 }

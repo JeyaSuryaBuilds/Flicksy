@@ -3,6 +3,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ToastProvider } from "./components/Toast";
 import { ProtectedRoute } from "./layouts/ProtectedRoute";
+import { VerifiedRoute } from "./layouts/VerifiedRoute";
 
 import { Splash } from "./pages/Splash";
 import { Onboarding } from "./pages/Onboarding";
@@ -10,6 +11,7 @@ import { Login } from "./pages/Login";
 import { SignUp } from "./pages/SignUp";
 import { ForgotPassword } from "./pages/ForgotPassword";
 import { ResetPassword } from "./pages/ResetPassword";
+import { VerifyEmail } from "./pages/VerifyEmail";
 import { Home } from "./pages/Home";
 import { Explore } from "./pages/Explore";
 import { Make } from "./pages/Make";
@@ -40,27 +42,30 @@ function App() {
             <Route path="/signup" element={<SignUp />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            {/* Auth-only (not VerifiedRoute) — an unverified user must be able to land here
+                without being bounced right back to itself. */}
+            <Route path="/verify-email" element={<ProtectedRoute><VerifyEmail /></ProtectedRoute>} />
 
             {/* Protected — final bottom nav: Stream | Discover | Make | Rush | Space */}
-            <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-            <Route path="/explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />
-            <Route path="/create" element={<ProtectedRoute><Make /></ProtectedRoute>} />
-            <Route path="/create/flick" element={<ProtectedRoute><CreatePost /></ProtectedRoute>} />
-            <Route path="/create/rush" element={<ProtectedRoute><RushCompose /></ProtectedRoute>} />
-            <Route path="/create/moment" element={<ProtectedRoute><MomentCompose /></ProtectedRoute>} />
-            <Route path="/rush" element={<ProtectedRoute><Rush /></ProtectedRoute>} />
-            <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/users/:userId" element={<ProtectedRoute><OtherUserProfile /></ProtectedRoute>} />
-            <Route path="/flicksy-ai" element={<ProtectedRoute><FlicksyAI /></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-            <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+            <Route path="/home" element={<VerifiedRoute><Home /></VerifiedRoute>} />
+            <Route path="/explore" element={<VerifiedRoute><Explore /></VerifiedRoute>} />
+            <Route path="/create" element={<VerifiedRoute><Make /></VerifiedRoute>} />
+            <Route path="/create/flick" element={<VerifiedRoute><CreatePost /></VerifiedRoute>} />
+            <Route path="/create/rush" element={<VerifiedRoute><RushCompose /></VerifiedRoute>} />
+            <Route path="/create/moment" element={<VerifiedRoute><MomentCompose /></VerifiedRoute>} />
+            <Route path="/rush" element={<VerifiedRoute><Rush /></VerifiedRoute>} />
+            <Route path="/notifications" element={<VerifiedRoute><Notifications /></VerifiedRoute>} />
+            <Route path="/profile" element={<VerifiedRoute><Profile /></VerifiedRoute>} />
+            <Route path="/users/:userId" element={<VerifiedRoute><OtherUserProfile /></VerifiedRoute>} />
+            <Route path="/flicksy-ai" element={<VerifiedRoute><FlicksyAI /></VerifiedRoute>} />
+            <Route path="/settings" element={<VerifiedRoute><Settings /></VerifiedRoute>} />
+            <Route path="/admin" element={<VerifiedRoute><Admin /></VerifiedRoute>} />
             <Route
               path="/messages"
               element={
-                <ProtectedRoute>
+                <VerifiedRoute>
                   <Messages />
-                </ProtectedRoute>
+                </VerifiedRoute>
               }
             >
               <Route path=":conversationId" element={<Chat />} />

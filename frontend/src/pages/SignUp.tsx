@@ -36,7 +36,7 @@ export function SignUp() {
     setIsLoading(true);
     try {
       await register({ email, username: username.trim(), display_name: displayName.trim(), password });
-      navigate("/home");
+      navigate("/verify-email", { state: { email } });
     } catch (err: any) {
       setFormError(err?.response?.data?.detail || "Something went wrong, please try again");
     } finally {

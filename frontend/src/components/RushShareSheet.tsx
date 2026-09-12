@@ -7,12 +7,20 @@ import { useToast } from "./Toast";
 import type { Conversation } from "../types";
 import styles from "./RushShareSheet.module.css";
 
+type ShareContentType = "rush" | "post";
+
 interface RushShareSheetProps {
   isOpen: boolean;
   onClose: () => void;
   postId: string;
   mediaUrl: string;
   caption?: string;
+  /** What kind of content this is — drives link path, wording, and the
+   *  "source" tag passed on to Add to Moments. Defaults to "rush" so every
+   *  existing call site (Rush.tsx) keeps working unchanged. */
+  contentType?: ShareContentType;
+  /** Needed so Add to Moments can preload the right editor mode. */
+  mediaType?: "image" | "video";
 }
 
 function LinkIcon() {
@@ -110,9 +118,15 @@ export function RushShareSheet({
   postId,
   mediaUrl,
   caption,
+  contentType = "rush",
+  mediaType,
 }: RushShareSheetProps) {
   const navigate = useNavigate();
   const { showToast } = useToast();
+
+  const isRush = contentType === "rush";
+  const nounCap = isRush ? "Rush" : "Flick";
+  const linkPath = isRush ? "r" : "p";
 
   const [conversations, setConversations] = useState<
     Conversation[]
@@ -124,7 +138,7 @@ export function RushShareSheet({
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
 
-  const rushLink = `${window.location.origin}/r/${postId}`;
+  const rushLink = `${window.location.origin}/${linkPath}/${postId}`;
 
   useEffect(() => {
     if (!isOpen) {
@@ -192,7 +206,7 @@ export function RushShareSheet({
   const handleSendToSelected = async () => {
     if (!selectedIds.length) {
       showToast(
-        "Choose someone to send this Rush",
+        `Choose someone to send this ${nounCap}`,
         "error",
       );
       return;
@@ -202,8 +216,8 @@ export function RushShareSheet({
 
     try {
       const message = caption
-        ? `Check out this Rush: ${rushLink}\n${caption}`
-        : `Check out this Rush: ${rushLink}`;
+        ? `Check out this ${nounCap}: ${rushLink}\n${caption}`
+        : `Check out this ${nounCap}: ${rushLink}`;
 
       await Promise.all(
         selectedIds.map((conversationId) =>
@@ -211,12 +225,12 @@ export function RushShareSheet({
         ),
       );
 
-      showToast("Rush sent", "success");
+      showToast(`${nounCap} sent`, "success");
       setSelectedIds([]);
       onClose();
     } catch {
       showToast(
-        "Couldn't send the Rush",
+        `Couldn't send the ${nounCap}`,
         "error",
       );
     } finally {
@@ -227,7 +241,7 @@ export function RushShareSheet({
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(rushLink);
-      showToast("Rush link copied", "success");
+      showToast(`${nounCap} link copied`, "success");
     } catch {
       showToast(
         "Couldn't copy the link",
@@ -257,7 +271,7 @@ export function RushShareSheet({
 
       const anchor = document.createElement("a");
       anchor.href = objectUrl;
-      anchor.download = `flickzy-rush-${postId}`;
+      anchor.download = `flickzy-${linkPath === "r" ? "rush" : "flick"}-${postId}`;
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
@@ -265,7 +279,7 @@ export function RushShareSheet({
       URL.revokeObjectURL(objectUrl);
 
       showToast(
-        "Rush saved",
+        `${nounCap} saved`,
         "success",
       );
     } catch {
@@ -288,8 +302,8 @@ export function RushShareSheet({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "Flickzy Rush",
-          text: caption || "Check out this Rush on Flickzy",
+          title: `Flickzy ${nounCap}`,
+          text: caption || `Check out this ${nounCap} on Flickzy`,
           url: rushLink,
         });
         return;
@@ -305,19 +319,29 @@ export function RushShareSheet({
   };
 
   const handleAddToMoments = () => {
+    if (!mediaUrl) {
+      showToast(
+        "Media isn't available",
+        "error",
+      );
+      return;
+    }
+
     onClose();
 
     /**
-     * Open Moment creator.
-     *
-     * The current MomentCompose can later be extended
-     * to accept this media URL as an imported asset.
+     * Opens the existing Moment editor with this media preloaded —
+     * MomentCompose reads `media`/`type`/`source` and jumps straight
+     * into editing instead of showing the empty upload picker, and
+     * reuses this URL directly on publish rather than re-uploading it.
      */
-    navigate(
-      `/create/moment?source=rush&media=${encodeURIComponent(
-        mediaUrl,
-      )}`,
-    );
+    const params = new URLSearchParams({
+      source: contentType,
+      media: mediaUrl,
+      type: mediaType || "image",
+    });
+
+    navigate(`/create/moment?${params.toString()}`);
   };
 
   return (
@@ -332,12 +356,12 @@ export function RushShareSheet({
         }
         role="dialog"
         aria-modal="true"
-        aria-label="Share Rush"
+        aria-label={`Share ${nounCap}`}
       >
         <div className={styles.handle} />
 
         <div className={styles.header}>
-          <h2>Send Rush</h2>
+          <h2>Send {nounCap}</h2>
 
           <button
             type="button"

@@ -178,3 +178,17 @@ export const PlayIcon = ({ size = 11, className }: IconProps) => (
     <polygon points="5,3 19,12 5,21" />
   </svg>
 );
+
+export const SpeakerIcon = ({ size = 21, className, muted = false }: IconProps & { muted?: boolean }) => (
+  <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+    <path d="M5 9v6h4l5 4V5l-5 4H5Z" strokeLinejoin="round" />
+    {muted ? (
+      <path d="m18 9 3 6m0-6-3 6" strokeLinecap="round" />
+    ) : (
+      <>
+        <path d="M17 8.5a5 5 0 0 1 0 7" strokeLinecap="round" />
+        <path d="M19.5 6a8.5 8.5 0 0 1 0 12" strokeLinecap="round" />
+      </>
+    )}
+  </svg>
+);

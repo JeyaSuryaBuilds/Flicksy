@@ -5,11 +5,15 @@ import { SearchBar } from "../components/SearchBar";
 import { Avatar } from "../components/Avatar";
 import { VerifiedBadge } from "../components/VerifiedBadge";
 import { MediaGrid } from "../components/MediaGrid";
+import { PostCard } from "../components/PostCard";
+import { CommentsSheet } from "../components/CommentsSheet";
+import { RushShareSheet } from "../components/RushShareSheet";
+import { CloseIcon, SearchIcon } from "../components/icons";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { EmptyState } from "../components/EmptyState";
-import { SearchIcon } from "../components/icons";
 import * as searchApi from "../services/search";
-import { getFeed } from "../services/posts";
+import { getFeed, likePost, unlikePost, bookmarkPost, unbookmarkPost } from "../services/posts";
+import { resolveMediaUrl } from "../utils/media";
 import type { Post, UserPublic } from "../types";
 import styles from "./Explore.module.css";
 
@@ -22,6 +26,9 @@ export function Explore() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [trending, setTrending] = useState<Post[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const [commentPost, setCommentPost] = useState<Post | null>(null);
+  const [sharePost, setSharePost] = useState<Post | null>(null);
 
   useEffect(() => {
     getFeed().then((res) => setTrending(res.posts)).catch(() => {});
@@ -52,6 +59,38 @@ export function Explore() {
     filter === "People" ? [] : filter === "Photos" ? posts.filter((p) => p.media_type === "image")
     : filter === "Videos" ? posts.filter((p) => p.media_type === "video")
     : posts;
+
+  const patchPostEverywhere = (postId: string, patch: Partial<Post>) => {
+    const apply = (list: Post[]) => list.map((p) => (p.id === postId ? { ...p, ...patch } : p));
+    setTrending(apply);
+    setPosts(apply);
+    setSelectedPost((prev) => (prev && prev.id === postId ? { ...prev, ...patch } : prev));
+  };
+
+  const handleLikeToggle = async (post: Post) => {
+    const wasLiked = post.is_liked;
+    patchPostEverywhere(post.id, {
+      is_liked: !wasLiked,
+      like_count: post.like_count + (wasLiked ? -1 : 1),
+    });
+    try {
+      if (wasLiked) await unlikePost(post.id);
+      else await likePost(post.id);
+    } catch {
+      patchPostEverywhere(post.id, { is_liked: wasLiked, like_count: post.like_count });
+    }
+  };
+
+  const handleBookmarkToggle = async (post: Post) => {
+    const wasBookmarked = post.is_bookmarked;
+    patchPostEverywhere(post.id, { is_bookmarked: !wasBookmarked });
+    try {
+      if (wasBookmarked) await unbookmarkPost(post.id);
+      else await bookmarkPost(post.id);
+    } catch {
+      patchPostEverywhere(post.id, { is_bookmarked: wasBookmarked });
+    }
+  };
 
   return (
     <AppLayout>
@@ -94,11 +133,57 @@ export function Explore() {
                 ))}
               </div>
             )}
-            {filteredPosts.length > 0 && <MediaGrid posts={filteredPosts} />}
+            {filteredPosts.length > 0 && <MediaGrid posts={filteredPosts} onSelect={setSelectedPost} />}
           </div>
         )
       ) : (
-        <MediaGrid posts={trending} />
+        <MediaGrid posts={trending} onSelect={setSelectedPost} />
+      )}
+
+      {selectedPost && (
+        <div className={styles.detailBackdrop} onClick={() => setSelectedPost(null)}>
+          <div className={styles.detailSheet} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.detailHeader}>
+              <button
+                type="button"
+                className={styles.detailClose}
+                onClick={() => setSelectedPost(null)}
+                aria-label="Close"
+              >
+                <CloseIcon size={20} />
+              </button>
+            </div>
+            <div className={styles.detailScroll}>
+              <PostCard
+                post={selectedPost}
+                onLikeToggle={handleLikeToggle}
+                onBookmarkToggle={handleBookmarkToggle}
+                onCommentClick={setCommentPost}
+                onShareClick={setSharePost}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {commentPost && (
+        <CommentsSheet
+          post={commentPost}
+          onClose={() => setCommentPost(null)}
+          onCommentCountChange={(count) => patchPostEverywhere(commentPost.id, { comment_count: count })}
+        />
+      )}
+
+      {sharePost && (
+        <RushShareSheet
+          isOpen={true}
+          onClose={() => setSharePost(null)}
+          postId={sharePost.id}
+          mediaUrl={resolveMediaUrl(sharePost.media?.[0]?.url)}
+          mediaType={sharePost.media_type}
+          caption={sharePost.caption}
+          contentType="post"
+        />
       )}
     </AppLayout>
   );

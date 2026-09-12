@@ -11,93 +11,19 @@ import {
   ShareIcon,
   BookmarkIcon,
   RushIcon,
+  SpeakerIcon,
 } from "../components/icons";
 import * as rushApi from "../services/rush";
 import * as postsApi from "../services/posts";
 import { CommentsSheet } from "../components/CommentsSheet";
 import { RushShareSheet } from "../components/RushShareSheet";
 import { useToast } from "../components/Toast";
+import { resolveMediaUrl } from "../utils/media";
 import type { Post } from "../types";
 import styles from "./Rush.module.css";
 
 const PHOTO_DURATION_MS = 5000;
 const DOUBLE_TAP_DELAY_MS = 280;
-
-function resolveMediaUrl(mediaUrl?: string | null): string {
-  if (!mediaUrl) return "";
-
-  if (/^https?:\/\//i.test(mediaUrl)) {
-    return mediaUrl;
-  }
-
-  const apiBaseUrl = (
-    import.meta.env.VITE_API_URL ||
-    "http://localhost:8000"
-  ).replace(/\/+$/, "");
-
-  const normalizedPath = mediaUrl.startsWith("/")
-    ? mediaUrl
-    : `/${mediaUrl}`;
-
-  return `${apiBaseUrl}${normalizedPath}`;
-}
-
-function SpeakerIcon({ muted }: { muted: boolean }) {
-  if (muted) {
-    return (
-      <svg
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-        className={styles.speakerSvg}
-      >
-        <path
-          d="M5 9v6h4l5 4V5l-5 4H5Z"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinejoin="round"
-        />
-        <path
-          d="m18 9 3 6m0-6-3 6"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-        />
-      </svg>
-    );
-  }
-
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className={styles.speakerSvg}
-    >
-      <path
-        d="M5 9v6h4l5 4V5l-5 4H5Z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M17 8.5a5 5 0 0 1 0 7"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-      <path
-        d="M19.5 6a8.5 8.5 0 0 1 0 12"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
 
 function PauseIcon() {
   return (
@@ -743,7 +669,19 @@ export function Rush() {
                   ) {
                     video
                       .play()
-                      .catch(() => {});
+                      .catch(() => {
+                        // Most browsers/WebViews block unmuted autoplay
+                        // without a direct user gesture. Rather than the
+                        // Rush silently freezing on first view, fall back
+                        // to muted autoplay and keep the speaker icon
+                        // honest about it — the user can still tap to
+                        // unmute, which is a real gesture and always allowed.
+                        if (!video.muted) {
+                          video.muted = true;
+                          setMuted(true);
+                          video.play().catch(() => {});
+                        }
+                      });
                   }
 
                   return;
@@ -938,7 +876,6 @@ export function Rush() {
                           styles.rushMedia
                         }
                         src={mediaUrl}
-                        autoPlay
                         loop
                         muted={muted}
                         playsInline
@@ -1008,13 +945,10 @@ export function Rush() {
                           "translate(-50%, -50%)",
                         width: 52,
                         height: 52,
-                        borderRadius:
-                          "50%",
+                        borderRadius: "50%",
                         background:
-                          "rgba(0,0,0,0.5)",
-                        color: "#fff",
-                        display:
-                          "flex",
+                          "rgba(0, 0, 0, 0.45)",
+                        display: "flex",
                         alignItems:
                           "center",
                         justifyContent:

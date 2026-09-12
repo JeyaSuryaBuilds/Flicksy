@@ -1,0 +1,74 @@
+.codeRow {
+  display: flex;
+  gap: 10px;
+}
+
+.codeBox {
+  width: 100%;
+  aspect-ratio: 1;
+  min-width: 0;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 600;
+  font-family: var(--font-display);
+  color: var(--color-cream);
+  background: var(--color-input);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  outline: none;
+}
+
+.codeBox:focus {
+  border-color: var(--color-coral);
+}
+
+.codeBoxError {
+  border-color: #e08a83;
+}
+
+.resendBtn {
+  background: none;
+  border: none;
+  color: var(--color-coral);
+  font-size: 13.5px;
+  font-weight: 500;
+  padding: 4px 0;
+  align-self: center;
+}
+
+.resendBtn:disabled {
+  color: var(--color-muted-dim);
+}
+
+.inlineLinkBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--color-cream);
+  display: inline;
+}
+
+.successWrap {
+  margin-top: 80px;
+  text-align: center;
+}
+
+.successBadge {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: rgba(80, 180, 120, 0.18);
+  color: #6fd39a;
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.successSubheading {
+  max-width: none;
+  margin-left: auto;
+  margin-right: auto;
+}

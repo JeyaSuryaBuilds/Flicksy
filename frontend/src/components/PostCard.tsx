@@ -1,15 +1,16 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import type { Post } from "../types";
 import { Avatar } from "./Avatar";
 import { VerifiedBadge } from "./VerifiedBadge";
 import { PostActions } from "./PostActions";
-import { MoreIcon, PlayIcon } from "./icons";
+import { MoreIcon, PlayIcon, SpeakerIcon } from "./icons";
 import { timeAgo } from "../utils/time";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "./Toast";
 import { deletePost } from "../services/posts";
 import { reportContent } from "../services/reports";
+import { resolveMediaUrl } from "../utils/media";
 import styles from "./PostCard.module.css";
 
 interface PostCardProps {
@@ -23,9 +24,23 @@ interface PostCardProps {
 
 export function PostCard({ post, onLikeToggle, onBookmarkToggle, onCommentClick, onShareClick, onDeleted }: PostCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const { user } = useAuth();
   const { showToast } = useToast();
   const isOwn = user?.id === post.author.id;
+  const mediaUrl = resolveMediaUrl(post.media?.[0]?.url);
+
+  const toggleVideoPlayback = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) {
+      video.play().catch(() => {});
+    } else {
+      video.pause();
+    }
+  };
 
   const handleDelete = async () => {
     setMenuOpen(false);
@@ -85,6 +100,47 @@ export function PostCard({ post, onLikeToggle, onBookmarkToggle, onCommentClick,
       </div>
 
       <div className={styles.media}>
+        {mediaUrl ? (
+          post.media_type === "video" ? (
+            <>
+              <video
+                ref={videoRef}
+                className={styles.mediaContent}
+                src={mediaUrl}
+                muted={isMuted}
+                loop
+                playsInline
+                preload="metadata"
+                onClick={toggleVideoPlayback}
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
+              />
+              {!isPlaying && (
+                <button
+                  type="button"
+                  className={styles.playOverlayBtn}
+                  onClick={toggleVideoPlayback}
+                  aria-label="Play video"
+                >
+                  <PlayIcon size={22} />
+                </button>
+              )}
+              <button
+                type="button"
+                className={styles.speakerButton}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsMuted((v) => !v);
+                }}
+                aria-label={isMuted ? "Unmute video" : "Mute video"}
+              >
+                <SpeakerIcon size={16} muted={isMuted} />
+              </button>
+            </>
+          ) : (
+            <img className={styles.mediaContent} src={mediaUrl} alt={post.caption || ""} draggable={false} />
+          )
+        ) : null}
         {post.media_type === "video" && (
           <span className={styles.mediaTag}>
             <PlayIcon />

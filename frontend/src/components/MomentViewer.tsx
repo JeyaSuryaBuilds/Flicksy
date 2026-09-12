@@ -7,7 +7,9 @@ import {
 import { Avatar } from "./Avatar";
 import {
   CloseIcon,
+  SpeakerIcon,
 } from "./icons";
+import { resolveMediaUrl } from "../utils/media";
 
 import {
   addMomentEcho,
@@ -95,27 +97,6 @@ function parseOverlayData(
       filter: "none",
     };
   }
-}
-
-function resolveMediaUrl(
-  mediaUrl?: string | null,
-): string {
-  if (!mediaUrl) return "";
-
-  if (/^https?:\/\//i.test(mediaUrl)) {
-    return mediaUrl;
-  }
-
-  const apiBaseUrl = (
-    import.meta.env.VITE_API_URL ||
-    "http://localhost:8000"
-  ).replace(/\/+$/, "");
-
-  const normalizedPath = mediaUrl.startsWith("/")
-    ? mediaUrl
-    : `/${mediaUrl}`;
-
-  return `${apiBaseUrl}${normalizedPath}`;
 }
 
 function MoreIcon() {
@@ -334,8 +315,18 @@ export function MomentViewer({
   const [reporting, setReporting] =
     useState(false);
 
-  const [muted, setMuted] =
+  const [isAuthorMuted, setIsAuthorMuted] =
     useState(false);
+
+  /**
+   * Real audio mute state for video Moments — independent from
+   * isAuthorMuted above (which is about hiding an author's Moments
+   * from the feed, not about sound). Starts muted, matching the
+   * safe cross-browser/WebView autoplay default, and is only ever
+   * unmuted by an explicit tap on the speaker control.
+   */
+  const [audioMuted, setAudioMuted] =
+    useState(true);
 
   /**
    * NEW:
@@ -411,7 +402,7 @@ export function MomentViewer({
       ) || "[]",
     ) as string[];
 
-    setMuted(
+    setIsAuthorMuted(
       mutedAuthors.includes(
         group.author_id,
       ),
@@ -737,7 +728,7 @@ export function MomentViewer({
     }
   };
 
-  const toggleMute = () => {
+  const toggleAuthorMute = () => {
     if (!group) return;
 
     const key =
@@ -748,7 +739,7 @@ export function MomentViewer({
         localStorage.getItem(key) || "[]",
       ) as string[];
 
-    const next = muted
+    const next = isAuthorMuted
       ? current.filter(
           (id) =>
             id !== group.author_id,
@@ -765,10 +756,10 @@ export function MomentViewer({
       JSON.stringify(next),
     );
 
-    setMuted(!muted);
+    setIsAuthorMuted(!isAuthorMuted);
     setMenuOpen(false);
 
-    if (!muted) {
+    if (!isAuthorMuted) {
       goNext();
     }
   };
@@ -927,6 +918,29 @@ export function MomentViewer({
               styles.headerActions
             }
           >
+            {moment.media_type ===
+              "video" && (
+              <button
+                className={styles.iconButton}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setAudioMuted(
+                    (value) => !value,
+                  );
+                }}
+                aria-label={
+                  audioMuted
+                    ? "Unmute Moment"
+                    : "Mute Moment"
+                }
+              >
+                <SpeakerIcon
+                  size={19}
+                  muted={audioMuted}
+                />
+              </button>
+            )}
+
             <button
               className={styles.iconButton}
               onClick={(event) => {
@@ -984,13 +998,23 @@ export function MomentViewer({
                   ] || "none",
               }}
               autoPlay={!isPaused}
-              muted={muted}
+              muted={audioMuted}
               playsInline
               onLoadedMetadata={(event) => {
                 if (!isPaused) {
-                  event.currentTarget
+                  const video = event.currentTarget;
+                  video
                     .play()
-                    .catch(() => {});
+                    .catch(() => {
+                      // Browser/WebView blocked unmuted autoplay —
+                      // fall back to muted rather than the Moment
+                      // silently freezing on first view.
+                      if (!video.muted) {
+                        video.muted = true;
+                        setAudioMuted(true);
+                        video.play().catch(() => {});
+                      }
+                    });
                 }
               }}
             />
@@ -1257,12 +1281,12 @@ export function MomentViewer({
 
               <button
                 className={styles.menuItem}
-                onClick={toggleMute}
+                onClick={toggleAuthorMute}
               >
                 <MuteIcon />
 
                 <span>
-                  {muted
+                  {isAuthorMuted
                     ? "Unmute"
                     : "Mute"}
                 </span>

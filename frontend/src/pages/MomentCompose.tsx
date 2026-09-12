@@ -5,7 +5,7 @@ import {
   type ChangeEvent,
   type PointerEvent,
 } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
 
 import { AppLayout } from "../layouts/AppLayout";
@@ -13,6 +13,7 @@ import { Button } from "../components/Button";
 import { PlayIcon } from "../components/icons";
 import { uploadMedia } from "../services/media";
 import { createMoment } from "../services/moments";
+import { resolveMediaUrl } from "../utils/media";
 import { SoundPicker, SelectedSoundChip } from "../components/SoundPicker";
 import type { Sound } from "../services/soundbox";
 import { useToast } from "../components/Toast";
@@ -128,6 +129,15 @@ export function MomentCompose() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<"image" | "video">("image");
 
+  /**
+   * Set when this editor was opened via "Add to Moments" from Rush,
+   * Stream, or Discover — the media already lives on the backend, so
+   * on publish we reuse this URL directly instead of re-uploading the
+   * same file (see handlePublish below).
+   */
+  const [importedMediaUrl, setImportedMediaUrl] = useState<string | null>(null);
+  const [importedFromLabel, setImportedFromLabel] = useState<string | null>(null);
+
   const [textOverlays, setTextOverlays] = useState<TextOverlay[]>([]);
   const [stickerOverlays, setStickerOverlays] = useState<StickerOverlay[]>([]);
 
@@ -190,7 +200,38 @@ export function MomentCompose() {
     useRef<HTMLInputElement | null>(null);
 
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { showToast } = useToast();
+
+  /**
+   * Preload media handed off from "Add to Moments" (Rush, Stream, Discover,
+   * or any other supported post). Runs once on mount — if present, this
+   * sends the component straight into the editor (the `if (!previewUrl)`
+   * gate below only shows the empty upload picker) with no re-upload of
+   * the same media required at publish time.
+   */
+  useEffect(() => {
+    const media = searchParams.get("media");
+    if (!media) return;
+
+    const resolvedUrl = resolveMediaUrl(decodeURIComponent(media));
+    if (!resolvedUrl) return;
+
+    const type = searchParams.get("type") === "video" ? "video" : "image";
+    const source = searchParams.get("source");
+    const sourceLabels: Record<string, string> = {
+      rush: "your Rush",
+      post: "your Flick",
+      stream: "your Flick",
+      discover: "this Flick",
+    };
+
+    setImportedMediaUrl(resolvedUrl);
+    setImportedFromLabel(source ? sourceLabels[source] || null : null);
+    setMediaType(type);
+    setPreviewUrl(resolvedUrl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /**
    * Automatically focus the inline text input.
@@ -709,7 +750,7 @@ export function MomentCompose() {
    * Save copy.
    */
   const handleSaveCopy = async () => {
-    if (!file || !previewUrl) {
+    if (!previewUrl) {
       showToast(
         "Add a photo or video first",
         "error"
@@ -717,24 +758,38 @@ export function MomentCompose() {
       return;
     }
 
+    const extension =
+      mediaType === "video"
+        ? file?.name.split(".").pop() ||
+          "mp4"
+        : "jpg";
+
+    const filename =
+      `flickzy-moment-${Date.now()}.${extension}`;
+
     try {
+      // Cross-origin URLs (imported media) ignore the `download` attribute
+      // unless fetched as a same-origin blob first; local blob: previews
+      // from a freshly picked file already download fine directly.
+      const href = previewUrl.startsWith("blob:")
+        ? previewUrl
+        : URL.createObjectURL(
+            await (await fetch(previewUrl)).blob()
+          );
+
       const anchor =
         document.createElement("a");
 
-      anchor.href = previewUrl;
-
-      const extension =
-        mediaType === "video"
-          ? file.name.split(".").pop() ||
-            "mp4"
-          : "jpg";
-
-      anchor.download =
-        `flickzy-moment-${Date.now()}.${extension}`;
+      anchor.href = href;
+      anchor.download = filename;
 
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
+
+      if (href !== previewUrl) {
+        URL.revokeObjectURL(href);
+      }
 
       showToast(
         "A copy of your Moment was saved",
@@ -782,7 +837,7 @@ export function MomentCompose() {
    * Publish.
    */
   const handlePublish = async () => {
-    if (!file) {
+    if (!file && !importedMediaUrl) {
       showToast(
         "Add a photo or video first",
         "error"
@@ -801,10 +856,11 @@ export function MomentCompose() {
     setIsPublishing(true);
 
     try {
-      const uploaded = await uploadMedia(
-        file,
-        mediaType
-      );
+      // Media handed off via "Add to Moments" is already hosted on the
+      // backend — reuse that URL directly rather than uploading the same
+      // file a second time. Only a freshly picked file needs uploading.
+      const mediaUrl = importedMediaUrl
+        ?? (await uploadMedia(file!, mediaType)).url;
 
       const overlayData =
         JSON.stringify({
@@ -818,7 +874,7 @@ export function MomentCompose() {
         });
 
       await createMoment({
-        media_url: uploaded.url,
+        media_url: mediaUrl,
         media_type: mediaType,
         overlay_data: overlayData,
         sound_id:
@@ -855,6 +911,8 @@ export function MomentCompose() {
     setFile(null);
     setPreviewUrl(null);
     setMediaType("image");
+    setImportedMediaUrl(null);
+    setImportedFromLabel(null);
 
     setTextOverlays([]);
     setStickerOverlays([]);
@@ -1011,7 +1069,7 @@ export function MomentCompose() {
           </button>
 
           <h1 className={styles.title}>
-            New Moment
+            {importedFromLabel ? `Add ${importedFromLabel} to Moments` : "New Moment"}
           </h1>
 
           <button

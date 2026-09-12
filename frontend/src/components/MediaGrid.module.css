@@ -10,6 +10,15 @@
   background: linear-gradient(150deg, #2a2118, #1a1712 60%, #241c16);
   border: none;
   padding: 0;
+  overflow: hidden;
+}
+
+.thumb {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .videoTag {

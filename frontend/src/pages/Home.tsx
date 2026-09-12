@@ -6,12 +6,14 @@ import { MomentViewer } from "../components/MomentViewer";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { EmptyState } from "../components/EmptyState";
 import { CommentsSheet } from "../components/CommentsSheet";
+import { RushShareSheet } from "../components/RushShareSheet";
 import * as postsApi from "../services/posts";
 import * as momentsApi from "../services/moments";
 import type { Post, MomentAuthorGroup } from "../types";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../components/Toast";
 import { ImageIcon } from "../components/icons";
+import { resolveMediaUrl } from "../utils/media";
 import { useNavigate } from "react-router-dom";
 import styles from "./Home.module.css";
 
@@ -22,6 +24,7 @@ export function Home() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState(false);
   const [activePost, setActivePost] = useState<Post | null>(null);
+  const [sharePost, setSharePost] = useState<Post | null>(null);
   const [momentGroups, setMomentGroups] = useState<MomentAuthorGroup[]>([]);
   const [myMomentCount, setMyMomentCount] = useState(0);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
@@ -120,8 +123,7 @@ export function Home() {
   };
 
   const handleShare = (post: Post) => {
-    navigator.clipboard?.writeText(`${window.location.origin}/f/${post.id}`);
-    showToast("Link copied — ready to Send On", "success");
+    setSharePost(post);
   };
 
   const handleDeleted = (post: Post) => {
@@ -209,6 +211,18 @@ export function Home() {
 
       {viewerIndex !== null && (
         <MomentViewer groups={momentGroups} startGroupIndex={viewerIndex} onClose={() => setViewerIndex(null)} />
+      )}
+
+      {sharePost && (
+        <RushShareSheet
+          isOpen={true}
+          onClose={() => setSharePost(null)}
+          postId={sharePost.id}
+          mediaUrl={resolveMediaUrl(sharePost.media?.[0]?.url)}
+          mediaType={sharePost.media_type}
+          caption={sharePost.caption}
+          contentType="post"
+        />
       )}
     </AppLayout>
   );
