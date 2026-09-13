@@ -24,6 +24,8 @@ VERIFICATION_RESEND_COOLDOWN_SECONDS = 60
 
 def _create_and_send_verification_email(db: Session, user: User):
     code = f"{random.randint(0, 999999):06d}"
+    # TEMPORARY: print OTP to Render logs for testing.
+    print(f"[Flickzy OTP] {user.email} -> {code}", flush=True)
     db.add(EmailVerificationToken(
         user_id=user.id, code=code,
         expires_at=datetime.utcnow() + timedelta(minutes=VERIFICATION_CODE_TTL_MINUTES),
