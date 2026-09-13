@@ -89,6 +89,7 @@ def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db
     # Always return 200 regardless of whether the email exists, to avoid leaking account existence.
     if user:
         code = f"{random.randint(0, 999999):06d}"
+        print(f"[Flickzy Password Reset OTP] {user.email} -> {code}", flush=True)
         db.add(PasswordResetToken(user_id=user.id, code=code, expires_at=datetime.utcnow() + timedelta(minutes=15)))
         db.commit()
         send_email(user.email, "Reset your Flicksy password", f"Your Flicksy password reset code is {code}. It expires in 15 minutes.")
