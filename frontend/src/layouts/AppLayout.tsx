@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useLocation } from "react-router-dom";
 import { DesktopSidebar } from "../components/DesktopSidebar";
 import { TopNavigation } from "../components/TopNavigation";
 import { BottomNavigation } from "../components/BottomNavigation";
@@ -15,11 +16,14 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children, rightRail, hideTopBar, hideBottomBar }: AppLayoutProps) {
+  const location = useLocation();
+  const showTopBar = !hideTopBar && location.pathname === "/home";
+
   return (
     <div className={styles.shell}>
       <DesktopSidebar />
       <div className={styles.main}>
-        {!hideTopBar && <TopNavigation />}
+        {showTopBar && <TopNavigation />}
         <div className={styles.centerColumn}>
           <div className={styles.content}>{children}</div>
           {rightRail && <aside className={styles.rightRail}>{rightRail}</aside>}

@@ -155,6 +155,36 @@ export function Rush() {
     };
   }, []);
 
+  /**
+   * Poll only while one or more Rushes are being prepared.
+   * This does not re-upload or re-run FFmpeg; it only refreshes
+   * the stored PostMedia URL/status after the background task finishes.
+   */
+  useEffect(() => {
+    if (!posts.some((post) => post.processing_status === "processing")) {
+      return;
+    }
+
+    let cancelled = false;
+    const interval = window.setInterval(() => {
+      rushApi
+        .getRushFeed()
+        .then((res) => {
+          if (!cancelled) {
+            setPosts(res.posts);
+          }
+        })
+        .catch(() => {
+          // Keep the current feed visible; the next poll can retry.
+        });
+    }, 3000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [posts]);
+
   const updatePost = useCallback(
     (
       postId: string,
@@ -863,7 +893,29 @@ export function Rush() {
                     )
                   }
                 >
-                  {mediaUrl ? (
+                  {post.processing_status === "processing" ? (
+                    <div
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 12,
+                        background: "#111",
+                        color: "#fff",
+                        textAlign: "center",
+                        padding: 24,
+                      }}
+                    >
+                      <LoadingSpinner />
+                      <strong>Preparing your Rush…</strong>
+                      <span style={{ opacity: 0.75, fontSize: 14 }}>
+                        Your video is being prepared for smooth playback.
+                      </span>
+                    </div>
+                  ) : mediaUrl ? (
                     post.media_type ===
                     "video" ? (
                       <video
@@ -880,7 +932,7 @@ export function Rush() {
                         muted={muted}
                         playsInline
                         controls={false}
-                        preload="auto"
+                        preload="metadata"
                       />
                     ) : (
                       <img
@@ -903,9 +955,28 @@ export function Rush() {
                     />
                   )}
 
+                  {post.processing_status === "failed" && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: 24,
+                        background: "rgba(0,0,0,0.65)",
+                        color: "#fff",
+                        textAlign: "center",
+                        zIndex: 6,
+                      }}
+                    >
+                      Couldn’t prepare this Rush video. Please try again.
+                    </div>
+                  )}
+
                   {/* Speaker */}
                   {post.media_type ===
-                    "video" && (
+                    "video" && post.processing_status === "ready" && (
                     <button
                       type="button"
                       className={

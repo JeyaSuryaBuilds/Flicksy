@@ -194,11 +194,9 @@ export function RushCompose() {
 
     try {
       /*
-       * The selected file is uploaded as-is.
-       *
-       * If it is longer than 90 seconds, the backend Rush
-       * endpoint automatically creates a first-90-second
-       * version using FFmpeg.
+       * The selected file is uploaded as-is. The Rush endpoint
+       * returns immediately; videos longer than 90 seconds are
+       * trimmed by a backend background task.
        */
       const uploaded = await uploadMedia(
         file,
@@ -212,7 +210,7 @@ export function RushCompose() {
               .join(" ")}`
           : caption;
 
-      await createRush({
+      const created = await createRush({
         caption: fullCaption,
         location: "",
         media_tag: "",
@@ -221,7 +219,9 @@ export function RushCompose() {
       });
 
       showToast(
-        "Rush posted!",
+        created.processing_status === "processing"
+          ? "Rush uploaded — preparing your video…"
+          : "Rush posted!",
         "success"
       );
 

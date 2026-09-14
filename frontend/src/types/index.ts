@@ -37,6 +37,8 @@ export interface Post {
   is_archived: boolean;
   is_pinned: boolean;
   sound_id?: string | null;
+  processing_status: "ready" | "processing" | "failed";
+  processing_error: string;
   like_count: number;
   comment_count: number;
   is_liked: boolean;
