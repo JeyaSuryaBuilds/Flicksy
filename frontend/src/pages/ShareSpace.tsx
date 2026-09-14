@@ -9,6 +9,8 @@ import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../components/Toast";
 import styles from "./ShareSpace.module.css";
 
+const FLICKZY_WEB_URL = "https://flickzy-eight.vercel.app";
+
 function ScanIcon() {
   return (
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
@@ -62,14 +64,17 @@ function ShareIcon() {
       <circle cx="18" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.8" />
       <circle cx="6" cy="12" r="2.5" stroke="currentColor" strokeWidth="1.8" />
       <circle cx="18" cy="19" r="2.5" stroke="currentColor" strokeWidth="1.8" />
-      <path d="m8.2 10.8 7.5-4.4M8.2 13.2l7.5 4.4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path
+        d="m8.2 10.8 7.5-4.4M8.2 13.2l7.5 4.4"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
 
-/** Real, publicly-reachable QR image generator — this is a real QR code encoding
- *  the user's actual Space URL, not a static/fake placeholder. Rendered via <img>
- *  rather than a bundled QR library so this ships with zero new dependencies. */
+/** Real QR image generator using the user's public Flickzy Space URL. */
 function qrImageUrl(data: string) {
   return `https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=12&data=${encodeURIComponent(data)}`;
 }
@@ -82,7 +87,9 @@ export function ShareSpace() {
 
   if (!user) return null;
 
-  const spaceUrl = `${window.location.origin}/users/${user.id}`;
+  // Always use the public Flickzy web app URL.
+  // Never use window.location.origin because APK/Electron can use localhost.
+  const spaceUrl = `${FLICKZY_WEB_URL}/users/${user.id}`;
   const qrUrl = qrImageUrl(spaceUrl);
 
   const handleCopyLink = async () => {
@@ -97,12 +104,16 @@ export function ShareSpace() {
   const handleShare = async () => {
     if (navigator.share) {
       try {
-        await navigator.share({ title: `${user.display_name} on flickzy`, url: spaceUrl });
+        await navigator.share({
+          title: `${user.display_name} on Flickzy`,
+          url: spaceUrl,
+        });
       } catch {
         // User cancelled the native share sheet.
       }
       return;
     }
+
     await handleCopyLink();
   };
 
@@ -110,15 +121,20 @@ export function ShareSpace() {
     try {
       const response = await fetch(qrUrl);
       if (!response.ok) throw new Error("Download failed");
+
       const blob = await response.blob();
       const objectUrl = URL.createObjectURL(blob);
+
       const anchor = document.createElement("a");
       anchor.href = objectUrl;
       anchor.download = `flickzy-space-${user.username}.png`;
+
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
+
       URL.revokeObjectURL(objectUrl);
+
       showToast("QR code saved", "success");
     } catch {
       showToast("Couldn't save the QR code", "error");
@@ -128,10 +144,10 @@ export function ShareSpace() {
   const handleScan = (rawValue: string) => {
     setIsScannerOpen(false);
 
-    // Expect a Flickzy Space URL like https://<host>/users/<id>. Extract the
-    // user id from the path rather than assuming the origin matches (a QR
-    // generated on a different deploy/host should still resolve correctly).
+    // Accept a Flickzy Space URL from any host/deployment.
+    // Only the /users/:id path is needed for internal navigation.
     const match = rawValue.match(/\/users\/([^/?#]+)/);
+
     if (!match) {
       showToast("That's not a Flickzy Space QR code", "error");
       return;
@@ -141,13 +157,20 @@ export function ShareSpace() {
   };
 
   return (
-    <AppLayout hideBottomBar>
+    <AppLayout hideTopBar hideBottomBar>
       <div className={styles.wrap}>
         <div className={styles.headerRow}>
-          <button type="button" className={styles.iconBtn} onClick={() => navigate(-1)} aria-label="Back">
+          <button
+            type="button"
+            className={styles.iconBtn}
+            onClick={() => navigate(-1)}
+            aria-label="Back"
+          >
             <BackIcon size={20} />
           </button>
+
           <h1 className={styles.title}>Share Space</h1>
+
           <button
             type="button"
             className={styles.iconBtn}
@@ -159,35 +182,64 @@ export function ShareSpace() {
         </div>
 
         <div className={styles.profileBlock}>
-          <Avatar url={user.avatar_url} initials={user.avatar_initials} size={64} />
+          <Avatar
+            url={user.avatar_url}
+            initials={user.avatar_initials}
+            size={64}
+          />
+
           <div className={styles.identity}>
             <span className={styles.username}>
               {user.username}
               {user.is_verified && <VerifiedBadge size={13} />}
             </span>
-            <span className={styles.displayName}>{user.display_name}</span>
+
+            <span className={styles.displayName}>
+              {user.display_name}
+            </span>
           </div>
         </div>
 
         <div className={styles.qrCard}>
-          <img src={qrUrl} alt={`QR code for ${user.username}'s flickzy Space`} className={styles.qrImage} />
-          <span className={styles.qrCaption}>Scan to visit @{user.username}'s Space</span>
+          <img
+            src={qrUrl}
+            alt={`QR code for ${user.username}'s Flickzy Space`}
+            className={styles.qrImage}
+          />
+
+          <span className={styles.qrCaption}>
+            Scan to visit @{user.username}'s Space
+          </span>
         </div>
 
         <div className={styles.actionRow}>
-          <button type="button" className={styles.action} onClick={handleShare}>
+          <button
+            type="button"
+            className={styles.action}
+            onClick={handleShare}
+          >
             <span className={styles.actionIcon}>
               <ShareIcon />
             </span>
             <span>Share</span>
           </button>
-          <button type="button" className={styles.action} onClick={handleCopyLink}>
+
+          <button
+            type="button"
+            className={styles.action}
+            onClick={handleCopyLink}
+          >
             <span className={styles.actionIcon}>
               <LinkIcon />
             </span>
             <span>Copy Link</span>
           </button>
-          <button type="button" className={styles.action} onClick={handleDownloadQr}>
+
+          <button
+            type="button"
+            className={styles.action}
+            onClick={handleDownloadQr}
+          >
             <span className={styles.actionIcon}>
               <DownloadIcon />
             </span>
@@ -196,7 +248,12 @@ export function ShareSpace() {
         </div>
       </div>
 
-      {isScannerOpen && <QrScanner onClose={() => setIsScannerOpen(false)} onScan={handleScan} />}
+      {isScannerOpen && (
+        <QrScanner
+          onClose={() => setIsScannerOpen(false)}
+          onScan={handleScan}
+        />
+      )}
     </AppLayout>
   );
 }

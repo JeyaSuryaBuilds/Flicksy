@@ -22,6 +22,8 @@ import { useToast } from "../components/Toast";
 import type { Post, UserPublic } from "../types";
 import profileStyles from "./Profile.module.css";
 
+const FLICKZY_WEB_URL = "https://flickzy-eight.vercel.app";
+
 export function OtherUserProfile() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
@@ -87,22 +89,30 @@ export function OtherUserProfile() {
   };
 
   const handleShareSpace = async () => {
-    if (!profileUser) return;
-    const url = `${window.location.origin}/users/${profileUser.id}`;
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: `${profileUser.display_name} on flickzy`, url });
-      } catch {
-        // User cancelled native share.
-      }
-      return;
-    }
+  if (!profileUser) return;
+
+  // Always use the public Flickzy web URL.
+  // Do not use window.location.origin because APK/Electron can return localhost.
+  const url = `https://flickzy-eight.vercel.app/users/${profileUser.id}`;
+
+  if (navigator.share) {
     try {
-      await navigator.clipboard.writeText(url);
-      showToast("Space link copied", "success");
+      await navigator.share({
+        title: `${profileUser.display_name} on Flickzy`,
+        url,
+      });
     } catch {
-      showToast("Couldn't copy the link", "error");
+      // User cancelled native share.
     }
+    return;
+  }
+
+   try {
+    await navigator.clipboard.writeText(url);
+    showToast("Space link copied", "success");
+   } catch {
+    showToast("Couldn't copy the link", "error");
+   }
   };
 
   const patchPost = (postId: string, patch: Partial<Post>) => {
