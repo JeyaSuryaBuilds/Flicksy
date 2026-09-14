@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -8,6 +9,7 @@ from app.models.models import User, Post, PostMedia, Like, Bookmark, Notificatio
 from app.schemas.schemas import PostOut, PostCreate, FeedResponse
 from app.auth.dependencies import get_current_user
 from app.utils.serializers import serialize_post, get_hidden_private_author_ids
+from app.utils.mentions import extract_mentioned_usernames, notify_mentioned_users
 from app.services.notification_service import notify
 
 router = APIRouter(prefix="/posts", tags=["posts"])
@@ -21,7 +23,7 @@ def get_feed(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    query = db.query(Post).order_by(Post.created_at.desc())
+    query = db.query(Post).filter(Post.is_archived == False).order_by(Post.created_at.desc())  # noqa: E712
     if cursor:
         query = query.filter(Post.created_at < cursor)
 
@@ -45,6 +47,8 @@ def get_post(post_id: str, db: Session = Depends(get_db), current_user: User = D
         raise HTTPException(status_code=404, detail="Post not found")
     if post.author_id in get_hidden_private_author_ids(db, current_user.id):
         raise HTTPException(status_code=403, detail="This Space is private")
+    if post.is_archived and post.author_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Post not found")
     return serialize_post(db, post, current_user)
 
 
@@ -63,6 +67,8 @@ def create_post(payload: PostCreate, db: Session = Depends(get_db), current_user
     for i, url in enumerate(payload.media_urls):
         db.add(PostMedia(post_id=post.id, url=url, order_index=i))
 
+    notify_mentioned_users(db, payload.caption, actor=current_user, post_id=post.id)
+
     db.commit()
     db.refresh(post)
     return serialize_post(db, post, current_user)
@@ -78,8 +84,12 @@ def update_post(
     if post.author_id != current_user.id:
         raise HTTPException(status_code=403, detail="You can only edit your own posts")
 
+    previously_mentioned = set(extract_mentioned_usernames(post.caption))
     post.caption = payload.caption
     post.location = payload.location
+    newly_mentioned = set(extract_mentioned_usernames(payload.caption)) - previously_mentioned
+    if newly_mentioned:
+        notify_mentioned_users(db, " ".join(f"@{u}" for u in newly_mentioned), actor=current_user, post_id=post.id)
     db.commit()
     db.refresh(post)
     return serialize_post(db, post, current_user)
@@ -96,6 +106,64 @@ def delete_post(post_id: str, db: Session = Depends(get_db), current_user: User 
     db.delete(post)
     db.commit()
     return
+
+
+@router.post("/{post_id}/archive", response_model=PostOut)
+def archive_post(post_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    post = db.query(Post).filter(Post.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    if post.author_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You can only archive your own posts")
+
+    post.is_archived = True
+    db.commit()
+    db.refresh(post)
+    return serialize_post(db, post, current_user)
+
+
+@router.post("/{post_id}/unarchive", response_model=PostOut)
+def unarchive_post(post_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    post = db.query(Post).filter(Post.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    if post.author_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You can only unarchive your own posts")
+
+    post.is_archived = False
+    db.commit()
+    db.refresh(post)
+    return serialize_post(db, post, current_user)
+
+
+@router.post("/{post_id}/pin", response_model=PostOut)
+def pin_post(post_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    post = db.query(Post).filter(Post.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    if post.author_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You can only pin your own posts")
+
+    post.is_pinned = True
+    post.pinned_at = datetime.utcnow()
+    db.commit()
+    db.refresh(post)
+    return serialize_post(db, post, current_user)
+
+
+@router.post("/{post_id}/unpin", response_model=PostOut)
+def unpin_post(post_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    post = db.query(Post).filter(Post.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    if post.author_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You can only unpin your own posts")
+
+    post.is_pinned = False
+    post.pinned_at = None
+    db.commit()
+    db.refresh(post)
+    return serialize_post(db, post, current_user)
 
 
 @router.post("/{post_id}/like", status_code=204)

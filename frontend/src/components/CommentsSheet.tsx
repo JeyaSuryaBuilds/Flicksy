@@ -4,6 +4,7 @@ import { CommentItem } from "./CommentItem";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { EmptyState } from "./EmptyState";
 import { SendIcon, CommentIcon } from "./icons";
+import { MentionInput } from "./MentionInput";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "./Toast";
 import * as commentsApi from "../services/comments";
@@ -81,11 +82,11 @@ export function CommentsSheet({ post, onClose, onCommentCountChange }: CommentsS
 
       <form className={styles.form} onSubmit={handleSubmit}>
         <span className={styles.avatarInitial}>{user?.avatar_initials}</span>
-        <input
+        <MentionInput
           className={styles.input}
-          placeholder="Add an Echo…"
+          placeholder="Add an Echo… (type @ to mention someone)"
           value={body}
-          onChange={(e) => setBody(e.target.value)}
+          onChange={setBody}
           maxLength={500}
         />
         <button type="submit" className={styles.sendBtn} disabled={isSending || !body.trim()} aria-label="Post comment">

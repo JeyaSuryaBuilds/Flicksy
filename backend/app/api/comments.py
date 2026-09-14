@@ -6,6 +6,7 @@ from app.models.models import User, Post, Comment, CommentLike, NotificationType
 from app.schemas.schemas import CommentOut, CommentCreate
 from app.auth.dependencies import get_current_user
 from app.utils.serializers import serialize_user
+from app.utils.mentions import notify_mentioned_users
 from app.services.notification_service import notify
 
 router = APIRouter(tags=["comments"])
@@ -55,6 +56,7 @@ def add_comment(
     )
     db.add(comment)
     notify(db, recipient_id=post.author_id, actor_id=current_user.id, ntype=NotificationType.comment, post_id=post_id)
+    notify_mentioned_users(db, payload.body, actor=current_user, post_id=post_id)
     db.commit()
     db.refresh(comment)
     return _serialize_comment(db, comment, current_user)

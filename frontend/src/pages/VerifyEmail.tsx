@@ -25,6 +25,11 @@ export function VerifyEmail() {
   // OTHER users and would leak everyone's email address.
   const emailHint = (location.state as { email?: string } | null)?.email;
 
+  // If VerifiedRoute sent an authenticated-but-unverified user here from a
+  // specific page (e.g. a shared /p/:id link), return them there afterward.
+  const from = (location.state as { from?: { pathname: string; search: string } } | null)?.from;
+  const redirectTo = from ? `${from.pathname}${from.search || ""}` : "/home";
+
   const [digits, setDigits] = useState<string[]>(Array(CODE_LENGTH).fill(""));
   const [status, setStatus] = useState<"idle" | "verifying" | "success">("idle");
   const [error, setError] = useState("");
@@ -36,7 +41,7 @@ export function VerifyEmail() {
   // there's nothing to do — send them on.
   useEffect(() => {
     if (user?.is_email_verified) {
-      navigate("/home", { replace: true });
+      navigate(redirectTo, { replace: true });
     }
   }, [user?.is_email_verified, navigate]);
 
@@ -107,7 +112,7 @@ export function VerifyEmail() {
       await refreshUser();
       setStatus("success");
       showToast("Email verified", "success");
-      setTimeout(() => navigate("/home", { replace: true }), 900);
+      setTimeout(() => navigate(redirectTo, { replace: true }), 900);
     } catch (err: any) {
       setStatus("idle");
       const detail = err?.response?.data?.detail || "Invalid or expired code";

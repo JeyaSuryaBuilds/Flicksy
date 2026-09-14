@@ -1,31 +1,44 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { AppLayout } from "../layouts/AppLayout";
 import { ProfileHeader } from "../components/ProfileHeader";
 import { MediaGrid } from "../components/MediaGrid";
+import { PostCard } from "../components/PostCard";
+import { CommentsSheet } from "../components/CommentsSheet";
+import { RushShareSheet } from "../components/RushShareSheet";
+import { UserListModal } from "../components/UserListModal";
 import { Modal } from "../components/Modal";
 import { Input } from "../components/Input";
+import { Toggle } from "../components/Toggle";
 import { Button } from "../components/Button";
 import { Avatar } from "../components/Avatar";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { EmptyState } from "../components/EmptyState";
 import { SpaceThemeWrapper } from "../components/SpaceThemeWrapper";
 import { SpaceThemeEditor } from "../components/SpaceThemeEditor";
-import { ImageIcon } from "../components/icons";
+import { CloseIcon, ImageIcon } from "../components/icons";
 import { useAuth } from "../hooks/useAuth";
-import { updateUser, checkFlickTagAvailable } from "../services/users";
-import { getFeed } from "../services/posts";
+import {
+  updateUser,
+  checkFlickTagAvailable,
+  getUserPosts,
+  getFollowers,
+  getFollowing,
+} from "../services/users";
+import { likePost, unlikePost, bookmarkPost, unbookmarkPost } from "../services/posts";
 import { uploadMedia } from "../services/media";
+import { resolveMediaUrl } from "../utils/media";
 import * as spaceThemeApi from "../services/spaceTheme";
 import type { SpaceTheme } from "../services/spaceTheme";
 import { useToast } from "../components/Toast";
-import type { Post } from "../types";
+import type { Post, UserPublic } from "../types";
 import styles from "./Profile.module.css";
 
 const TABS = ["Flicks", "Tagged", "Keeps"] as const;
 
 export function Profile() {
   const { user, refreshUser } = useAuth();
+  const navigate = useNavigate();
   const [tab, setTab] = useState<(typeof TABS)[number]>("Flicks");
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,18 +51,39 @@ export function Profile() {
   const [website, setWebsite] = useState(user?.website || "");
   const [pronouns, setPronouns] = useState(user?.pronouns || "");
   const [avatarUrl, setAvatarUrl] = useState(user?.avatar_url || "");
+  const [contactInfo, setContactInfo] = useState(user?.contact_info || "");
+  const [showContact, setShowContact] = useState(user?.show_contact || false);
   const [flickTag, setFlickTag] = useState(user?.username || "");
   const [flickTagStatus, setFlickTagStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
+  // Open Flicks: post detail modal, reusing the same PostCard (with its
+  // owner menu — Edit/Pin/Archive/Delete) used everywhere else in the app.
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const [commentPost, setCommentPost] = useState<Post | null>(null);
+  const [sharePost, setSharePost] = useState<Post | null>(null);
+
+  // Crew / Circles
+  const [crewOpen, setCrewOpen] = useState(false);
+  const [circlesOpen, setCirclesOpen] = useState(false);
+  const [crewUsers, setCrewUsers] = useState<UserPublic[]>([]);
+  const [circleUsers, setCircleUsers] = useState<UserPublic[]>([]);
+  const [isCrewLoading, setIsCrewLoading] = useState(false);
+  const [isCirclesLoading, setIsCirclesLoading] = useState(false);
+
   const { showToast } = useToast();
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    getFeed()
-      .then((res) => setPosts(res.posts.filter((p) => p.author.id === user?.id)))
+    if (!user?.id) return;
+    setIsLoading(true);
+    getUserPosts(user.id)
+      .then(setPosts)
+      .catch(() => showToast("Couldn't load your Flicks", "error"))
       .finally(() => setIsLoading(false));
     spaceThemeApi.getMySpaceTheme().then(setTheme).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   // Live FlickTag availability check while editing, debounced
@@ -80,6 +114,8 @@ export function Profile() {
     setWebsite(user.website);
     setPronouns(user.pronouns);
     setAvatarUrl(user.avatar_url);
+    setContactInfo(user.contact_info);
+    setShowContact(user.show_contact);
     setFlickTag(user.username);
     setFlickTagStatus("idle");
     setIsEditOpen(true);
@@ -113,6 +149,8 @@ export function Profile() {
         pronouns,
         avatar_url: avatarUrl,
         username: flickTag.trim().toLowerCase(),
+        contact_info: contactInfo,
+        show_contact: showContact,
       });
       await refreshUser();
       showToast("Space updated", "success");
@@ -122,6 +160,60 @@ export function Profile() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const patchPost = (postId: string, patch: Partial<Post>) => {
+    setPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, ...patch } : p)));
+    setSelectedPost((prev) => (prev && prev.id === postId ? { ...prev, ...patch } : prev));
+  };
+
+  const handleLikeToggle = async (post: Post) => {
+    const wasLiked = post.is_liked;
+    patchPost(post.id, { is_liked: !wasLiked, like_count: post.like_count + (wasLiked ? -1 : 1) });
+    try {
+      if (wasLiked) await unlikePost(post.id);
+      else await likePost(post.id);
+    } catch {
+      patchPost(post.id, { is_liked: wasLiked, like_count: post.like_count });
+    }
+  };
+
+  const handleBookmarkToggle = async (post: Post) => {
+    const wasBookmarked = post.is_bookmarked;
+    patchPost(post.id, { is_bookmarked: !wasBookmarked });
+    try {
+      if (wasBookmarked) await unbookmarkPost(post.id);
+      else await bookmarkPost(post.id);
+    } catch {
+      patchPost(post.id, { is_bookmarked: wasBookmarked });
+    }
+  };
+
+  const handlePostDeleted = (post: Post) => {
+    setPosts((prev) => prev.filter((p) => p.id !== post.id));
+    setSelectedPost(null);
+  };
+
+  const handlePostUpdated = (updated: Post) => {
+    // Unlike the public feed, the owner's own grid keeps showing archived
+    // posts (so Unarchive stays reachable) — just patch the flags in place.
+    patchPost(updated.id, updated);
+  };
+
+  const openCrew = () => {
+    setCrewOpen(true);
+    setIsCrewLoading(true);
+    getFollowers(user.id)
+      .then(setCrewUsers)
+      .finally(() => setIsCrewLoading(false));
+  };
+
+  const openCircles = () => {
+    setCirclesOpen(true);
+    setIsCirclesLoading(true);
+    getFollowing(user.id)
+      .then(setCircleUsers)
+      .finally(() => setIsCirclesLoading(false));
   };
 
   return (
@@ -136,7 +228,14 @@ export function Profile() {
           </Link>
         </div>
 
-        <ProfileHeader user={user} isOwnProfile onEditProfile={openEdit} />
+        <ProfileHeader
+          user={user}
+          isOwnProfile
+          onEditProfile={openEdit}
+          onShareSpace={() => navigate("/space/share")}
+          onCrewClick={openCrew}
+          onCirclesClick={openCircles}
+        />
 
         <div className={styles.tabs}>
           {TABS.map((t) => (
@@ -155,9 +254,74 @@ export function Profile() {
             description={tab === "Flicks" ? "Share your first Flick to see it here." : undefined}
           />
         ) : (
-          <MediaGrid posts={visiblePosts} />
+          <MediaGrid posts={visiblePosts} onSelect={setSelectedPost} />
         )}
       </SpaceThemeWrapper>
+
+      {selectedPost && (
+        <div className={styles.detailBackdrop} onClick={() => setSelectedPost(null)}>
+          <div className={styles.detailSheet} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.detailHeader}>
+              <button type="button" className={styles.detailClose} onClick={() => setSelectedPost(null)} aria-label="Close">
+                <CloseIcon size={20} />
+              </button>
+            </div>
+            <div className={styles.detailScroll}>
+              <PostCard
+                post={selectedPost}
+                onLikeToggle={handleLikeToggle}
+                onBookmarkToggle={handleBookmarkToggle}
+                onCommentClick={setCommentPost}
+                onShareClick={setSharePost}
+                onDeleted={handlePostDeleted}
+                onUpdated={handlePostUpdated}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {commentPost && (
+        <CommentsSheet
+          post={commentPost}
+          onClose={() => setCommentPost(null)}
+          onCommentCountChange={(count) => patchPost(commentPost.id, { comment_count: count })}
+        />
+      )}
+
+      {sharePost && (
+        <RushShareSheet
+          isOpen={true}
+          onClose={() => setSharePost(null)}
+          postId={sharePost.id}
+          mediaUrl={resolveMediaUrl(sharePost.media?.[0]?.url)}
+          mediaType={sharePost.media_type}
+          caption={sharePost.caption}
+          contentType="post"
+        />
+      )}
+
+      {crewOpen && (
+        <UserListModal
+          title="Crew"
+          users={crewUsers}
+          isLoading={isCrewLoading}
+          emptyMessage="No Crew yet"
+          onClose={() => setCrewOpen(false)}
+          onUserClick={() => setCrewOpen(false)}
+        />
+      )}
+
+      {circlesOpen && (
+        <UserListModal
+          title="Circles"
+          users={circleUsers}
+          isLoading={isCirclesLoading}
+          emptyMessage="Not following anyone yet"
+          onClose={() => setCirclesOpen(false)}
+          onUserClick={() => setCirclesOpen(false)}
+        />
+      )}
 
       <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title="Edit Space">
         <div className={styles.editForm}>
@@ -195,6 +359,20 @@ export function Profile() {
           <Input label="Bio" value={bio} onChange={(e) => setBio(e.target.value)} />
           <Input label="Website" placeholder="yourlink.com" value={website} onChange={(e) => setWebsite(e.target.value)} />
           <Input label="Pronouns" placeholder="e.g. she/her" value={pronouns} onChange={(e) => setPronouns(e.target.value)} />
+
+          <Input
+            label="Contact"
+            placeholder="Email, phone, or link people can reach you at"
+            value={contactInfo}
+            onChange={(e) => setContactInfo(e.target.value)}
+          />
+          <Toggle
+            checked={showContact}
+            onChange={setShowContact}
+            label="Show Contact"
+            description="Let visitors to your Space see a Contact button with the info above"
+          />
+
           <Button onClick={handleSaveProfile} isLoading={isSaving} disabled={flickTagStatus === "taken"}>
             Save Changes
           </Button>

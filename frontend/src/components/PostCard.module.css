@@ -184,3 +184,9 @@
   color: var(--color-muted-dim);
   margin-top: 6px;
 }
+
+.editForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

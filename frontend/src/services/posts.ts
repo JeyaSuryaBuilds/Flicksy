@@ -27,6 +27,34 @@ export async function deletePost(postId: string): Promise<void> {
   await api.delete(`/posts/${postId}`);
 }
 
+export async function updatePost(
+  postId: string,
+  data: { caption: string; location: string; media_type: string; media_tag: string; media_urls: string[] }
+): Promise<Post> {
+  const res = await api.put<Post>(`/posts/${postId}`, data);
+  return res.data;
+}
+
+export async function archivePost(postId: string): Promise<Post> {
+  const res = await api.post<Post>(`/posts/${postId}/archive`);
+  return res.data;
+}
+
+export async function unarchivePost(postId: string): Promise<Post> {
+  const res = await api.post<Post>(`/posts/${postId}/unarchive`);
+  return res.data;
+}
+
+export async function pinPost(postId: string): Promise<Post> {
+  const res = await api.post<Post>(`/posts/${postId}/pin`);
+  return res.data;
+}
+
+export async function unpinPost(postId: string): Promise<Post> {
+  const res = await api.post<Post>(`/posts/${postId}/unpin`);
+  return res.data;
+}
+
 export async function likePost(postId: string): Promise<void> {
   await api.post(`/posts/${postId}/like`);
 }

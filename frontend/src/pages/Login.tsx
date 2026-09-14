@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AuthLayout } from "../layouts/AuthLayout";
 import { Input } from "../components/Input";
 import { PasswordInput } from "../components/PasswordInput";
@@ -17,6 +17,13 @@ export function Login() {
   const { login } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // If the person arrived here because ProtectedRoute/VerifiedRoute bounced
+  // them off a specific page (e.g. a shared /p/:id or /r/:id link), return
+  // them there after a successful login instead of always going to /home.
+  const from = (location.state as { from?: { pathname: string; search: string } } | null)?.from;
+  const redirectTo = from ? `${from.pathname}${from.search || ""}` : "/home";
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -24,7 +31,7 @@ export function Login() {
     setIsLoading(true);
     try {
       await login(email, password);
-      navigate("/home");
+      navigate(redirectTo, { replace: true });
     } catch (err: any) {
       setError(err?.response?.data?.detail || "Incorrect email or password");
     } finally {

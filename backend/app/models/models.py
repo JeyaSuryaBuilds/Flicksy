@@ -28,6 +28,8 @@ class User(Base):
     avatar_initials = Column(String, default="")
     website = Column(String, default="")
     pronouns = Column(String, default="")
+    contact_info = Column(String, default="")  # freeform (email/phone/link) shown on public Space when show_contact is on
+    show_contact = Column(Boolean, default=False)  # publicly show the Contact button/info on this Space
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)  # Verified Space badge — admin-granted only
     is_email_verified = Column(Boolean, default=False)
@@ -65,6 +67,9 @@ class Post(Base):
     media_type = Column(String, default="image")  # image | video
     media_tag = Column(String, default="")  # e.g. video duration label
     is_rush = Column(Boolean, default=False)  # True = Rush (short-video experience), False = normal Flick
+    is_archived = Column(Boolean, default=False)  # hidden from feed/other viewers' Space grid; still visible to the owner
+    is_pinned = Column(Boolean, default=False)  # shown first in the owner's own Space grid
+    pinned_at = Column(DateTime, nullable=True)  # orders multiple pinned posts (most-recently-pinned first)
     sound_id = Column(String, ForeignKey("sounds.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 

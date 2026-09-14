@@ -15,6 +15,7 @@ import { uploadMedia } from "../services/media";
 import { createMoment } from "../services/moments";
 import { resolveMediaUrl } from "../utils/media";
 import { SoundPicker, SelectedSoundChip } from "../components/SoundPicker";
+import { MentionInput } from "../components/MentionInput";
 import type { Sound } from "../services/soundbox";
 import { useToast } from "../components/Toast";
 import styles from "./MomentCompose.module.css";
@@ -1523,13 +1524,12 @@ export function MomentCompose() {
         )}
 
         {/* Caption */}
-        <textarea
+        <MentionInput
           className={styles.captionInput}
           placeholder="Add a caption…"
           value={caption}
-          onChange={(event) =>
-            setCaption(event.target.value)
-          }
+          onChange={setCaption}
+          multiline
           rows={2}
         />
 

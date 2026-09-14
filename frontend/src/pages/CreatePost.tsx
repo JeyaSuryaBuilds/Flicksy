@@ -2,11 +2,12 @@ import { useState, type ChangeEvent, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppLayout } from "../layouts/AppLayout";
 import { Button } from "../components/Button";
-import { ImageIcon, LocationIcon, TagIcon, CloseIcon, SparkleIcon, PlayIcon } from "../components/icons";
+import { ImageIcon, LocationIcon, CloseIcon, SparkleIcon, PlayIcon } from "../components/icons";
 import { createPost } from "../services/posts";
 import { uploadMedia } from "../services/media";
 import { generateCaption, suggestTopicTags } from "../services/ai";
 import { SoundPicker, SelectedSoundChip } from "../components/SoundPicker";
+import { MentionInput } from "../components/MentionInput";
 import type { Sound } from "../services/soundbox";
 import { useToast } from "../components/Toast";
 import styles from "./CreatePost.module.css";
@@ -17,7 +18,6 @@ export function CreatePost() {
   const [mediaType, setMediaType] = useState<"image" | "video">("image");
   const [caption, setCaption] = useState("");
   const [location, setLocation] = useState("");
-  const [taggedUsers, setTaggedUsers] = useState("");
   const [topicTags, setTopicTags] = useState<string[]>([]);
   const [selectedSound, setSelectedSound] = useState<Sound | null>(null);
   const [isSoundPickerOpen, setIsSoundPickerOpen] = useState(false);
@@ -141,12 +141,13 @@ export function CreatePost() {
           </label>
         )}
 
-        <textarea
+        <MentionInput
           className={styles.textarea}
-          placeholder="Write a caption…"
+          placeholder="Write a caption… (type @ to mention someone from your Crew or Circles)"
           value={caption}
-          onChange={(e) => setCaption(e.target.value)}
+          onChange={setCaption}
           maxLength={2200}
+          multiline
           rows={3}
         />
 
@@ -187,15 +188,6 @@ export function CreatePost() {
             placeholder="Add location"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-          />
-        </div>
-        <div className={styles.metaRow}>
-          <TagIcon size={17} />
-          <input
-            className={styles.metaInput}
-            placeholder="Tag people (comma separated FlickTags)"
-            value={taggedUsers}
-            onChange={(e) => setTaggedUsers(e.target.value)}
           />
         </div>
 

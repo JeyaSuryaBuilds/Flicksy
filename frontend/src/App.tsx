@@ -22,6 +22,8 @@ import { MomentCompose } from "./pages/MomentCompose";
 import { Notifications } from "./pages/Notifications";
 import { Profile } from "./pages/Profile";
 import { OtherUserProfile } from "./pages/OtherUserProfile";
+import { ShareSpace } from "./pages/ShareSpace";
+import { PostPermalink } from "./pages/PostPermalink";
 import { Messages } from "./pages/Messages";
 import { Chat } from "./pages/Chat";
 import { FlicksyAI } from "./pages/FlicksyAI";
@@ -56,6 +58,9 @@ function App() {
             <Route path="/rush" element={<VerifiedRoute><Rush /></VerifiedRoute>} />
             <Route path="/notifications" element={<VerifiedRoute><Notifications /></VerifiedRoute>} />
             <Route path="/profile" element={<VerifiedRoute><Profile /></VerifiedRoute>} />
+            <Route path="/space/share" element={<VerifiedRoute><ShareSpace /></VerifiedRoute>} />
+            <Route path="/p/:postId" element={<VerifiedRoute><PostPermalink /></VerifiedRoute>} />
+            <Route path="/r/:postId" element={<VerifiedRoute><PostPermalink /></VerifiedRoute>} />
             <Route path="/users/:userId" element={<VerifiedRoute><OtherUserProfile /></VerifiedRoute>} />
             <Route path="/flicksy-ai" element={<VerifiedRoute><FlicksyAI /></VerifiedRoute>} />
             <Route path="/settings" element={<VerifiedRoute><Settings /></VerifiedRoute>} />

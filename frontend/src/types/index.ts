@@ -14,6 +14,9 @@ export interface UserPublic {
   following_count: number;
   posts_count: number;
   is_following: boolean;
+  is_followed_by: boolean;
+  show_contact: boolean;
+  contact_info: string;
 }
 
 export interface PostMedia {
@@ -31,6 +34,8 @@ export interface Post {
   media_tag: string;
   media: PostMedia[];
   is_rush: boolean;
+  is_archived: boolean;
+  is_pinned: boolean;
   sound_id?: string | null;
   like_count: number;
   comment_count: number;

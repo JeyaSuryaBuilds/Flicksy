@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 
@@ -16,6 +16,7 @@ import { LoadingSpinner } from "../components/LoadingSpinner";
  */
 export function VerifiedRoute({ children }: { children: ReactNode }) {
   const { isAuthenticated, isLoading, user } = useAuth();
+  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -26,11 +27,11 @@ export function VerifiedRoute({ children }: { children: ReactNode }) {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
   if (user && !user.is_email_verified) {
-    return <Navigate to="/verify-email" replace />;
+    return <Navigate to="/verify-email" replace state={{ from: location }} />;
   }
 
   return <>{children}</>;

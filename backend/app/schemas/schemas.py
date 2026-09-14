@@ -51,7 +51,12 @@ class UserPublic(BaseModel):
     following_count: int = 0
     posts_count: int = 0
     is_following: bool = False
+    is_followed_by: bool = False
     can_view_content: bool = True
+    show_contact: bool = False
+    # Only populated when show_contact is True (or the viewer is the owner) — see
+    # serialize_user. Kept empty otherwise so it never leaks to viewers who shouldn't see it.
+    contact_info: str = ""
 
     class Config:
         from_attributes = True
@@ -64,6 +69,8 @@ class UserUpdate(BaseModel):
     avatar_url: Optional[str] = None
     website: Optional[str] = None
     pronouns: Optional[str] = None
+    contact_info: Optional[str] = None
+    show_contact: Optional[bool] = None
 
 
 class FlickTagAvailability(BaseModel):
@@ -100,6 +107,8 @@ class PostOut(BaseModel):
     media_tag: str
     media: List[PostMediaOut] = []
     is_rush: bool = False
+    is_archived: bool = False
+    is_pinned: bool = False
     sound_id: Optional[str] = None
     like_count: int = 0
     comment_count: int = 0

@@ -89,3 +89,59 @@
   color: #e08a83;
   margin-top: 6px;
 }
+
+.detailBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+@media (min-width: 768px) {
+  .detailBackdrop {
+    align-items: center;
+  }
+}
+
+.detailSheet {
+  width: 100%;
+  max-width: 480px;
+  max-height: 92vh;
+  background: var(--color-bg);
+  border-radius: 20px 20px 0 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 768px) {
+  .detailSheet {
+    border-radius: 20px;
+    max-height: 88vh;
+  }
+}
+
+.detailHeader {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 14px 0;
+}
+
+.detailClose {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-input);
+  color: var(--color-cream);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.detailScroll {
+  overflow-y: auto;
+}

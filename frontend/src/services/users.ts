@@ -1,5 +1,5 @@
 import { api } from "./api";
-import type { UserPublic } from "../types";
+import type { UserPublic, Post } from "../types";
 
 export async function getUser(userId: string): Promise<UserPublic> {
   const res = await api.get<UserPublic>(`/users/${userId}`);
@@ -8,9 +8,23 @@ export async function getUser(userId: string): Promise<UserPublic> {
 
 export async function updateUser(
   userId: string,
-  data: { display_name?: string; bio?: string; avatar_url?: string; website?: string; pronouns?: string; username?: string }
+  data: {
+    display_name?: string;
+    bio?: string;
+    avatar_url?: string;
+    website?: string;
+    pronouns?: string;
+    username?: string;
+    contact_info?: string;
+    show_contact?: boolean;
+  }
 ): Promise<UserPublic> {
   const res = await api.put<UserPublic>(`/users/${userId}`, data);
+  return res.data;
+}
+
+export async function getUserPosts(userId: string): Promise<Post[]> {
+  const res = await api.get<Post[]>(`/users/${userId}/posts`);
   return res.data;
 }
 
@@ -26,6 +40,11 @@ export async function getFollowers(userId: string): Promise<UserPublic[]> {
 
 export async function getFollowing(userId: string): Promise<UserPublic[]> {
   const res = await api.get<UserPublic[]>(`/users/${userId}/following`);
+  return res.data;
+}
+
+export async function getMentionableUsers(query: string): Promise<UserPublic[]> {
+  const res = await api.get<UserPublic[]>(`/users/mentionable`, { params: { q: query } });
   return res.data;
 }
 

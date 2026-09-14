@@ -10,9 +10,23 @@ interface ProfileHeaderProps {
   onEditProfile?: () => void;
   onFollowToggle?: () => void;
   onMessage?: () => void;
+  onShareSpace?: () => void;
+  onContactClick?: () => void;
+  onCrewClick?: () => void;
+  onCirclesClick?: () => void;
 }
 
-export function ProfileHeader({ user, isOwnProfile, onEditProfile, onFollowToggle, onMessage }: ProfileHeaderProps) {
+export function ProfileHeader({
+  user,
+  isOwnProfile,
+  onEditProfile,
+  onFollowToggle,
+  onMessage,
+  onShareSpace,
+  onContactClick,
+  onCrewClick,
+  onCirclesClick,
+}: ProfileHeaderProps) {
   return (
     <div className={styles.wrap}>
       <div className={styles.top}>
@@ -22,14 +36,14 @@ export function ProfileHeader({ user, isOwnProfile, onEditProfile, onFollowToggl
             <span className={styles.statNum}>{user.posts_count}</span>
             <span className={styles.statLabel}>Flicks</span>
           </div>
-          <div className={styles.stat}>
+          <button type="button" className={styles.stat} onClick={onCrewClick} disabled={!onCrewClick}>
             <span className={styles.statNum}>{user.followers_count}</span>
             <span className={styles.statLabel}>Crew</span>
-          </div>
-          <div className={styles.stat}>
+          </button>
+          <button type="button" className={styles.stat} onClick={onCirclesClick} disabled={!onCirclesClick}>
             <span className={styles.statNum}>{user.following_count}</span>
             <span className={styles.statLabel}>Circles</span>
-          </div>
+          </button>
         </div>
       </div>
 
@@ -48,16 +62,49 @@ export function ProfileHeader({ user, isOwnProfile, onEditProfile, onFollowToggl
 
       <div className={styles.actions}>
         {isOwnProfile ? (
-          <Button variant="secondary" onClick={onEditProfile}>
-            Edit Space
-          </Button>
+          <>
+            <Button variant="secondary" onClick={onEditProfile}>
+              Edit Space
+            </Button>
+            <Button variant="secondary" onClick={onShareSpace}>
+              Share Space
+            </Button>
+          </>
         ) : (
           <>
-            <Button variant={user.is_following ? "secondary" : "primary"} onClick={onFollowToggle}>
-              {user.is_following ? "In your Circles" : "Follow"}
-            </Button>
-            <Button variant="secondary" onClick={onMessage}>
-              Chat
+            {user.is_following && user.is_followed_by ? (
+              // Mutual — Case 1
+              <>
+                <Button variant="secondary" onClick={onFollowToggle}>
+                  My Circle
+                </Button>
+                <Button variant="secondary" onClick={onMessage}>
+                  Chat
+                </Button>
+              </>
+            ) : user.is_following ? (
+              // I follow them, they don't follow me — Case 2
+              <Button variant="secondary" onClick={onFollowToggle}>
+                Following
+              </Button>
+            ) : user.is_followed_by ? (
+              // They follow me, I don't follow them — Case 4
+              <Button variant="primary" onClick={onFollowToggle}>
+                Add to My Circle
+              </Button>
+            ) : (
+              // Neither follows the other — Case 3
+              <Button variant="primary" onClick={onFollowToggle}>
+                Follow
+              </Button>
+            )}
+            {user.show_contact && (
+              <Button variant="secondary" onClick={onContactClick}>
+                Contact
+              </Button>
+            )}
+            <Button variant="secondary" onClick={onShareSpace}>
+              Share Space
             </Button>
           </>
         )}
