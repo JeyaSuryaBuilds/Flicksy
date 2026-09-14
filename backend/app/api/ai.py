@@ -12,6 +12,7 @@ from app.services.ai_service import (
     generate_ai_text, CHAT_SYSTEM, CAPTION_SYSTEM, BIO_SYSTEM, TOPIC_TAG_SYSTEM,
     build_caption_prompt, build_bio_prompt, build_topic_tag_prompt,
 )
+from app.services.founder_service import is_founder_question, build_founder_system_prompt
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
@@ -80,7 +81,17 @@ async def ai_chat(
     db.add(AIMessage(conversation_id=conversation.id, role="user", content=payload.message))
 
     prompt = payload.message if not payload.context else f"{payload.message}\n\nContext:\n{payload.context}"
-    reply_text, provider = await generate_ai_text(prompt, system=CHAT_SYSTEM)
+
+    # Founder-related questions get answered from Flickzy's Founder Knowledge database
+    # (source of truth, anti-hallucination rule enforced in the system prompt) instead
+    # of the generic chat system — see app/services/founder_service.py.
+    system = (
+        build_founder_system_prompt(db, payload.message, CHAT_SYSTEM)
+        if is_founder_question(payload.message)
+        else CHAT_SYSTEM
+    )
+
+    reply_text, provider = await generate_ai_text(prompt, system=system)
 
     db.add(AIMessage(conversation_id=conversation.id, role="assistant", content=reply_text, provider=provider))
     db.commit()

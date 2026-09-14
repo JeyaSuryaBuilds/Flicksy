@@ -3,20 +3,45 @@ import styles from "./Avatar.module.css";
 
 interface AvatarProps {
   url?: string;
-  initials: string;
+  initials?: string;
   size?: number;
   ring?: boolean;
 }
 
-export function Avatar({ url, initials, size = 40, ring = false }: AvatarProps) {
-  const style = { width: size, height: size, fontSize: Math.max(11, size * 0.34) };
+export function Avatar({
+  url,
+  initials: _initials,
+  size = 40,
+  ring = false,
+}: AvatarProps) {
+  const style = {
+    width: size,
+    height: size,
+  };
+
   const resolvedUrl = resolveMediaUrl(url);
+
   return (
-    <div className={[styles.avatar, ring ? styles.ring : ""].join(" ")} style={style}>
+    <div
+      className={[styles.avatar, ring ? styles.ring : ""].join(" ")}
+      style={style}
+      aria-label={resolvedUrl ? "Profile photo" : "Default profile avatar"}
+    >
       {resolvedUrl ? (
-        <img src={resolvedUrl} alt="" className={styles.img} />
+        <img
+          src={resolvedUrl}
+          alt=""
+          className={styles.img}
+          draggable={false}
+        />
       ) : (
-        <span aria-hidden="true">{initials}</span>
+        <span
+          className={styles.defaultAvatar}
+          aria-hidden="true"
+        >
+          <span className={styles.head} />
+          <span className={styles.body} />
+        </span>
       )}
     </div>
   );

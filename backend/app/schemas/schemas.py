@@ -110,6 +110,8 @@ class PostOut(BaseModel):
     is_archived: bool = False
     is_pinned: bool = False
     sound_id: Optional[str] = None
+    processing_status: str = "ready"
+    processing_error: str = ""
     like_count: int = 0
     comment_count: int = 0
     is_liked: bool = False

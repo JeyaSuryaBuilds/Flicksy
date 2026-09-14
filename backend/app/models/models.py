@@ -24,7 +24,7 @@ class User(Base):
     display_name = Column(String, nullable=False)
     hashed_password = Column(String, nullable=False)
     bio = Column(Text, default="")
-    avatar_url = Column(String, default="")
+    avatar_url = Column(Text, default="")
     avatar_initials = Column(String, default="")
     website = Column(String, default="")
     pronouns = Column(String, default="")
@@ -71,6 +71,8 @@ class Post(Base):
     is_pinned = Column(Boolean, default=False)  # shown first in the owner's own Space grid
     pinned_at = Column(DateTime, nullable=True)  # orders multiple pinned posts (most-recently-pinned first)
     sound_id = Column(String, ForeignKey("sounds.id"), nullable=True)
+    processing_status = Column(String, default="ready", nullable=False)  # ready | processing | failed
+    processing_error = Column(Text, default="", nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
     author = relationship("User", back_populates="posts")
@@ -462,3 +464,141 @@ class PasswordResetToken(Base):
     expires_at = Column(DateTime, nullable=False)
     used = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+# ---------------------------------------------------------------------------
+# Founder Knowledge
+#
+# A structured, database-backed source of truth about Flickzy's founder, used
+# by Flickzy AI to answer founder-related questions accurately instead of
+# guessing. Deliberately normalized into a singleton profile plus repeatable
+# child tables (projects/skills/links/achievements) rather than one giant text
+# blob, so it can be queried selectively (e.g. "just links of type github")
+# and extended over time from the admin panel without a schema change.
+#
+# Every row carries is_public: only public=True rows are ever exposed to
+# normal users, Flickzy AI, or the public founder API. Admin endpoints can
+# see and edit everything regardless of visibility.
+# ---------------------------------------------------------------------------
+class FounderProfile(Base):
+    """Singleton — there is exactly one founder profile row. All fields are
+    nullable/blank by default; only what's explicitly provided gets filled in.
+    Nothing here is ever auto-generated or guessed."""
+    __tablename__ = "founder_profiles"
+
+    id = Column(String, primary_key=True, default=gen_uuid)
+
+    # Basic Information
+    full_name = Column(String, default="")
+    public_name = Column(String, default="")
+    role = Column(String, default="")
+    professional_title = Column(String, default="")
+    short_bio = Column(Text, default="")
+    detailed_bio = Column(Text, default="")
+    description = Column(Text, default="")
+
+    # Professional Information
+    professional_background = Column(Text, default="")
+    education = Column(Text, default="")
+
+    # Flickzy Information
+    role_in_flickzy = Column(Text, default="")
+    why_flickzy_created = Column(Text, default="")
+    flickzy_origin_story = Column(Text, default="")
+    flickzy_mission = Column(Text, default="")
+    flickzy_vision = Column(Text, default="")
+    flickzy_goals = Column(Text, default="")
+    founder_responsibilities = Column(Text, default="")
+    flickzy_technologies = Column(Text, default="")  # freeform summary — structured tech stack lives in FounderSkill
+    development_status = Column(Text, default="")
+    future_plans = Column(Text, default="")
+
+    # Additional founder facts
+    interests = Column(Text, default="")
+    development_focus = Column(Text, default="")
+    career_goals = Column(Text, default="")
+    professional_strengths = Column(Text, default="")
+    areas_of_expertise = Column(Text, default="")
+
+    is_public = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    projects = relationship("FounderProject", back_populates="founder", cascade="all, delete-orphan")
+    skills = relationship("FounderSkill", back_populates="founder", cascade="all, delete-orphan")
+    links = relationship("FounderLink", back_populates="founder", cascade="all, delete-orphan")
+    achievements = relationship("FounderAchievement", back_populates="founder", cascade="all, delete-orphan")
+
+
+class FounderProject(Base):
+    __tablename__ = "founder_projects"
+
+    id = Column(String, primary_key=True, default=gen_uuid)
+    founder_id = Column(String, ForeignKey("founder_profiles.id"), nullable=False, index=True)
+
+    name = Column(String, nullable=False)
+    short_description = Column(Text, default="")
+    detailed_description = Column(Text, default="")
+    category = Column(String, default="")
+    technologies = Column(Text, default="")  # comma-separated freeform list
+    role = Column(String, default="")
+    status = Column(String, default="")
+    github_url = Column(String, default="")
+    live_url = Column(String, default="")
+    portfolio_url = Column(String, default="")
+    display_order = Column(Integer, default=0)
+    is_public = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    founder = relationship("FounderProfile", back_populates="projects")
+
+
+class FounderSkill(Base):
+    __tablename__ = "founder_skills"
+
+    id = Column(String, primary_key=True, default=gen_uuid)
+    founder_id = Column(String, ForeignKey("founder_profiles.id"), nullable=False, index=True)
+
+    name = Column(String, nullable=False)
+    category = Column(String, default="")  # e.g. Language, Frontend, Backend, Database, Mobile, Desktop, Cloud, AI, Tool
+    proficiency = Column(String, nullable=True)  # only ever set if explicitly known — never invented
+    description = Column(Text, default="")
+    display_order = Column(Integer, default=0)
+    is_public = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    founder = relationship("FounderProfile", back_populates="skills")
+
+
+class FounderLink(Base):
+    __tablename__ = "founder_links"
+
+    id = Column(String, primary_key=True, default=gen_uuid)
+    founder_id = Column(String, ForeignKey("founder_profiles.id"), nullable=False, index=True)
+
+    link_type = Column(String, nullable=False)  # portfolio | github | linkedin | freelance | website | demo | other
+    title = Column(String, default="")
+    url = Column(String, nullable=False)
+    description = Column(Text, default="")
+    display_order = Column(Integer, default=0)
+    is_public = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    founder = relationship("FounderProfile", back_populates="links")
+
+
+class FounderAchievement(Base):
+    __tablename__ = "founder_achievements"
+
+    id = Column(String, primary_key=True, default=gen_uuid)
+    founder_id = Column(String, ForeignKey("founder_profiles.id"), nullable=False, index=True)
+
+    title = Column(String, nullable=False)
+    description = Column(Text, default="")
+    category = Column(String, default="")  # certification | award | accomplishment | milestone
+    date_achieved = Column(String, default="")  # freeform (e.g. "2024") since precision is never assumed
+    display_order = Column(Integer, default=0)
+    is_public = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    founder = relationship("FounderProfile", back_populates="achievements")

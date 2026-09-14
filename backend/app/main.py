@@ -4,10 +4,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.database.session import Base, engine
+from app.database.session import Base, engine, SessionLocal
 from app.database.migrations import run_sqlite_autopatch
 from app.api import auth, users, posts, comments, messages, notifications, search
-from app.api import media, moments, settings, ai, reports, rush, soundbox, flash, space_theme, admin
+from app.api import media, moments, settings, ai, reports, rush, soundbox, flash, space_theme, admin, founder
+from app.services.founder_service import ensure_founder_seed
 
 # Import models so they're registered on Base before create_all runs.
 from app.models import models  # noqa: F401
@@ -15,6 +16,11 @@ from app.models import models  # noqa: F401
 
 Base.metadata.create_all(bind=engine)
 run_sqlite_autopatch(engine, Base)
+
+# Idempotent — only inserts the founder profile if none exists yet. Safe to run
+# on every startup, never overwrites existing (including admin-edited) data.
+with SessionLocal() as _seed_db:
+    ensure_founder_seed(_seed_db)
 
 
 app = FastAPI(
@@ -28,26 +34,32 @@ app = FastAPI(
 # Supports:
 # - Local React/Vite development
 # - Capacitor Android/iOS WebView
-# - Production origins configured through Render environment variables
-allowed_origins = [
-    origin.strip()
-    for origin in os.getenv(
-        "CORS_ORIGINS",
-        "http://localhost:5173,http://localhost"
-    ).split(",")
-    if origin.strip()
-]
+# - Production frontend origin(s) via CORS_ORIGINS env var (comma-separated)
+_default_origins = ["http://localhost:5173", "http://localhost:3000", "capacitor://localhost", "http://localhost"]
+_env_origins = os.getenv("CORS_ORIGINS", "")
+_extra_origins = [o.strip() for o in _env_origins.split(",") if o.strip()]
 
-
-# Allow requests from Capacitor/WebView during testing.
-# This is intentionally configured without credentials while testing
-# the APK CORS flow.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=_default_origins + _extra_origins,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+# ---------------------------------------------------------------------------
+# Static media
+#
+# Only the public/ subdirectory is mounted — private media (Flash, private
+# posts) is served through an authenticated endpoint that checks ownership
+# (see app/services/media_service.py) and drop this mount.
+# ---------------------------------------------------------------------------
+_media_public_dir = os.path.join(os.path.dirname(__file__), "media", "public")
+os.makedirs(_media_public_dir, exist_ok=True)
+app.mount(
+    "/media",
+    StaticFiles(directory=_media_public_dir),
+    name="media",
 )
 
 
@@ -68,40 +80,9 @@ app.include_router(soundbox.router)
 app.include_router(flash.router)
 app.include_router(space_theme.router)
 app.include_router(admin.router)
-
-
-# Serve PUBLIC media locally in development.
-# Only the public/ subdirectory is mounted —
-# private/ (Flash) is deliberately NOT static-served.
-# See GET /media/private/{filename} in app/api/media.py
-# for authorized-only access.
-#
-# In production, swap MEDIA_STORAGE_BACKEND to a cloud provider
-# (see app/services/media_service.py) and drop this mount.
-_media_public_dir = os.path.join(
-    os.getenv("MEDIA_LOCAL_DIR", "./media"),
-    "public"
-)
-
-os.makedirs(_media_public_dir, exist_ok=True)
-
-app.mount(
-    "/media",
-    StaticFiles(directory=_media_public_dir),
-    name="media"
-)
+app.include_router(founder.router)
 
 
 @app.get("/")
 def root():
-    return {
-        "status": "ok",
-        "service": "flicksy-api"
-    }
-
-
-@app.get("/health")
-def health():
-    return {
-        "status": "healthy"
-    }
+    return {"status": "ok", "service": "flicksy-api"}

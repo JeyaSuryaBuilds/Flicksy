@@ -10,6 +10,7 @@ import { useToast } from "./Toast";
 import * as commentsApi from "../services/comments";
 import type { Comment, Post } from "../types";
 import styles from "./CommentsSheet.module.css";
+import { Avatar } from "./Avatar";
 
 interface CommentsSheetProps {
   post: Post;
@@ -81,7 +82,7 @@ export function CommentsSheet({ post, onClose, onCommentCountChange }: CommentsS
       )}
 
       <form className={styles.form} onSubmit={handleSubmit}>
-        <span className={styles.avatarInitial}>{user?.avatar_initials}</span>
+        <Avatar  url={user?.avatar_url}  initials={user?.avatar_initials}  size={32}/>
         <MentionInput
           className={styles.input}
           placeholder="Add an Echo… (type @ to mention someone)"
