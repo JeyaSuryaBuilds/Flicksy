@@ -11,9 +11,11 @@ export function Splash() {
 
   useEffect(() => {
     if (isLoading) return;
+
     const timer = setTimeout(() => {
       navigate(isAuthenticated ? "/home" : "/onboarding", { replace: true });
-    }, 900);
+    }, 5000);
+
     return () => clearTimeout(timer);
   }, [isLoading, isAuthenticated, navigate]);
 
@@ -21,8 +23,9 @@ export function Splash() {
     <AuthLayout>
       <div className={styles.center}>
         <div className={styles.wordmark}>
-          flick<span>zy</span>
+          Flick<span>zy</span>
         </div>
+
         <div className={styles.spinnerWrap}>
           <LoadingSpinner size={22} />
         </div>
