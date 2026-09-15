@@ -1,50 +1,106 @@
 """
-Email sending abstraction. Configure via environment variables (see .env.example):
+Flickzy transactional email service using Brevo REST API.
 
-  SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, SMTP_FROM_EMAIL, SMTP_USE_TLS
-
-If SMTP_HOST is unset, emails are logged to the backend console instead of sent — this is a
-development fallback, not a claim that the email was delivered. The API response for anything
-that triggers an email never reveals whether real SMTP is configured, to avoid leaking that
-detail to the frontend/client.
+Brevo sends:
+- Email verification OTP
+- Password reset OTP
+- Password changed notification
 """
+
+import json
 import os
-import smtplib
-from email.mime.text import MIMEText
-
-SMTP_HOST = os.getenv("SMTP_HOST", "")
-SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
-SMTP_USERNAME = os.getenv("SMTP_USERNAME", "")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
-SMTP_FROM_EMAIL = os.getenv("SMTP_FROM_EMAIL", "noreply@flicksy.dev")
-SMTP_USE_TLS = os.getenv("SMTP_USE_TLS", "true").lower() == "true"
+import urllib.error
+import urllib.request
 
 
-def is_smtp_configured() -> bool:
-    return bool(SMTP_HOST and SMTP_USERNAME and SMTP_PASSWORD)
+BREVO_API_KEY = os.getenv("BREVO_API_KEY", "").strip()
+BREVO_SENDER_EMAIL = os.getenv("BREVO_SENDER_EMAIL", "").strip()
+BREVO_SENDER_NAME = os.getenv("BREVO_SENDER_NAME", "Flickzy").strip()
+
+BREVO_API_URL = "https://api.brevo.com/v3/smtp/email"
+
+
+def is_brevo_configured() -> bool:
+    return bool(
+        BREVO_API_KEY
+        and BREVO_SENDER_EMAIL
+    )
 
 
 def send_email(to_email: str, subject: str, body: str) -> bool:
-    """Returns True if the email was actually sent via SMTP, False if it only hit the dev
-    console log. Callers should not tell the user "email sent" based on this return value —
-    for security (not leaking account existence / SMTP config), API responses stay generic
-    either way; this return value is only for internal/ops logging."""
-    if not is_smtp_configured():
-        print(f"[Flicksy dev email — SMTP not configured, not actually sent]\nTo: {to_email}\nSubject: {subject}\n\n{body}\n")
+    """
+    Send a transactional email through Brevo.
+
+    Returns:
+        True  -> Brevo accepted the email
+        False -> email was not sent
+
+    Authentication, OTP generation, OTP storage and OTP verification
+    remain completely inside Flickzy.
+    """
+
+    if not is_brevo_configured():
+        print(
+            "[Flickzy email] Brevo is not configured.\n"
+            f"To: {to_email}\n"
+            f"Subject: {subject}\n"
+            f"Body: {body}\n",
+            flush=True,
+        )
         return False
 
-    try:
-        msg = MIMEText(body)
-        msg["Subject"] = subject
-        msg["From"] = SMTP_FROM_EMAIL
-        msg["To"] = to_email
+    payload = {
+        "sender": {
+            "name": BREVO_SENDER_NAME,
+            "email": BREVO_SENDER_EMAIL,
+        },
+        "to": [
+            {
+                "email": to_email,
+            }
+        ],
+        "subject": subject,
+        "textContent": body,
+    }
 
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as server:
-            if SMTP_USE_TLS:
-                server.starttls()
-            server.login(SMTP_USERNAME, SMTP_PASSWORD)
-            server.sendmail(SMTP_FROM_EMAIL, [to_email], msg.as_string())
+    request = urllib.request.Request(
+        BREVO_API_URL,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "accept": "application/json",
+            "api-key": BREVO_API_KEY,
+            "content-type": "application/json",
+        },
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(request, timeout=15) as response:
+            response_body = response.read().decode("utf-8")
+
+        print(
+            f"[Flickzy email] Brevo accepted email to {to_email}: "
+            f"{response_body}",
+            flush=True,
+        )
+
         return True
-    except Exception as e:  # noqa: BLE001 — email delivery failure must never crash the request
-        print(f"[Flicksy email] Failed to send to {to_email}: {e}")
+
+    except urllib.error.HTTPError as error:
+        error_body = error.read().decode("utf-8", errors="replace")
+
+        print(
+            f"[Flickzy email] Brevo HTTP {error.code}: "
+            f"{error_body}",
+            flush=True,
+        )
+
+        return False
+
+    except Exception as error:
+        print(
+            f"[Flickzy email] Failed to send to {to_email}: {error}",
+            flush=True,
+        )
+
         return False
