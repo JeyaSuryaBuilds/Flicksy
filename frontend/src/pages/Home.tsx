@@ -148,6 +148,7 @@ export function Home() {
         <StoryAvatar
           name="Your Moment"
           initials={user?.avatar_initials || "Y"}
+          avatarUrl={user?.avatar_url || ""}
           isOwn
           onClick={handleAddMomentClick}
           onAddClick={() => navigate("/create/moment")}

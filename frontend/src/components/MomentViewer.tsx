@@ -18,6 +18,7 @@ import {
   reportMoment,
   viewMoment,
 } from "../services/moments";
+import { getSound } from "../services/soundbox";
 
 import type {
   MomentAuthorGroup,
@@ -326,7 +327,13 @@ export function MomentViewer({
    * unmuted by an explicit tap on the speaker control.
    */
   const [audioMuted, setAudioMuted] =
-    useState(true);
+    useState(false);
+
+  const [selectedSoundUrl, setSelectedSoundUrl] =
+    useState<string | null>(null);
+
+  const soundAudioRef =
+    useRef<HTMLAudioElement | null>(null);
 
   /**
    * NEW:
@@ -411,6 +418,62 @@ export function MomentViewer({
     moment?.id,
     group?.author_id,
   ]);
+
+  /**
+   * Load an optional Flick Sound attached to this Moment.
+   * When a Flick Sound exists, the original video track is muted
+   * and the selected sound is played as the active audio track.
+   */
+  useEffect(() => {
+    let cancelled = false;
+
+    setSelectedSoundUrl(null);
+
+    if (!moment?.sound_id) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    getSound(moment.sound_id)
+      .then((sound) => {
+        if (!cancelled) {
+          setSelectedSoundUrl(resolveMediaUrl(sound.audio_url));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSelectedSoundUrl(null);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [moment?.sound_id]);
+
+  useEffect(() => {
+    const audio = soundAudioRef.current;
+
+    if (!audio || !selectedSoundUrl) {
+      return;
+    }
+
+    audio.src = selectedSoundUrl;
+    audio.loop = true;
+
+    if (isPaused || audioMuted) {
+      audio.pause();
+      return;
+    }
+
+    audio.play().catch(() => {});
+
+    return () => {
+      audio.pause();
+      audio.currentTime = 0;
+    };
+  }, [selectedSoundUrl, isPaused, audioMuted, moment?.id]);
 
   /**
    * Moment playback / progress.
@@ -966,6 +1029,14 @@ export function MomentViewer({
         </div>
       </div>
 
+      <audio
+        ref={soundAudioRef}
+        src={selectedSoundUrl || undefined}
+        preload="auto"
+        aria-hidden="true"
+        style={{ display: "none" }}
+      />
+
       <div
         className={styles.mediaArea}
         onClick={(event) =>
@@ -998,7 +1069,7 @@ export function MomentViewer({
                   ] || "none",
               }}
               autoPlay={!isPaused}
-              muted={audioMuted}
+              muted={audioMuted || Boolean(moment?.sound_id)}
               playsInline
               onLoadedMetadata={(event) => {
                 if (!isPaused) {
@@ -1006,14 +1077,9 @@ export function MomentViewer({
                   video
                     .play()
                     .catch(() => {
-                      // Browser/WebView blocked unmuted autoplay —
-                      // fall back to muted rather than the Moment
-                      // silently freezing on first view.
-                      if (!video.muted) {
-                        video.muted = true;
-                        setAudioMuted(true);
-                        video.play().catch(() => {});
-                      }
+                      // Some WebViews block autoplay with audio.
+                      // Do not permanently change the Moment's audio state;
+                      // the existing speaker control can be used after the tap.
                     });
                 }
               }}

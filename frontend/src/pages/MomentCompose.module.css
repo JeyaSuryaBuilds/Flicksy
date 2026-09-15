@@ -873,3 +873,193 @@
     width: 100%;
   }
 }
+
+/* Mobile Moment editor — tools float over the media, desktop remains unchanged. */
+.destinationPrimary,
+.closeCrewButton,
+.closeCrewActive {
+  flex: 1;
+  min-width: 0;
+  min-height: 58px;
+  border-radius: 16px;
+  border: 1px solid var(--color-border);
+  background: var(--color-card);
+  color: var(--color-cream);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 9px 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.destinationPrimary:hover,
+.closeCrewButton:hover {
+  border-color: var(--color-coral);
+}
+
+.closeCrewActive {
+  border-color: var(--color-coral);
+  background: var(--color-coral-soft);
+}
+
+.destinationPrimary strong,
+.closeCrewButton strong,
+.closeCrewActive strong {
+  display: block;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.destinationPrimary small,
+.closeCrewButton small,
+.closeCrewActive small {
+  display: block;
+  margin-top: 3px;
+  color: var(--color-muted);
+  font-size: 9.5px;
+  line-height: 1.2;
+}
+
+.destinationIcon {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-input);
+  color: var(--color-cream);
+}
+
+.soundOverlay {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 899px) {
+  .wrap {
+    position: relative;
+    max-width: 100%;
+    padding: 4px 10px 16px;
+    gap: 8px;
+  }
+
+  .headerRow {
+    min-height: 42px;
+    padding: 0 2px;
+  }
+
+  .title {
+    font-size: 17px;
+  }
+
+  .stage {
+    max-width: none;
+    width: 100%;
+    aspect-ratio: 9 / 15.8;
+    border-radius: 20px;
+  }
+
+  .toolGrid {
+    position: absolute;
+    z-index: 15;
+    top: 58px;
+    right: 17px;
+    width: 66px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    pointer-events: auto;
+  }
+
+  .tool,
+  .toolActive {
+    width: 66px;
+    min-height: 58px;
+    box-sizing: border-box;
+    padding: 7px 3px;
+    border-radius: 18px;
+    flex-direction: column;
+    gap: 4px;
+    background: rgba(18, 18, 20, 0.82);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: #fff;
+    font-size: 9px;
+  }
+
+  .tool span:first-child {
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  .toolActive {
+    border-color: var(--color-coral);
+    background: rgba(18, 18, 20, 0.9);
+  }
+
+  .soundOverlay {
+    position: absolute;
+    z-index: 14;
+    top: 66px;
+    left: 18px;
+    width: min(205px, calc(100% - 102px));
+    pointer-events: none;
+  }
+
+  .soundOverlay > * {
+    pointer-events: auto;
+  }
+
+  .soundButton {
+    width: auto;
+    min-height: 42px;
+    padding: 7px 12px;
+    border-radius: 13px;
+    background: rgba(18, 18, 20, 0.82);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: #fff;
+  }
+
+  .destinationRow {
+    gap: 8px;
+  }
+
+  .destinationPrimary,
+  .closeCrewButton,
+  .closeCrewActive {
+    min-height: 64px;
+    border-radius: 18px;
+    padding: 8px 10px;
+  }
+
+  .destinationPrimary strong,
+  .closeCrewButton strong,
+  .closeCrewActive strong {
+    font-size: 11px;
+  }
+
+  .destinationPrimary small,
+  .closeCrewButton small,
+  .closeCrewActive small {
+    font-size: 8.5px;
+  }
+
+  .privacyRow {
+    display: none;
+  }
+
+  .actions {
+    display: flex;
+  }
+}
+
+
+.closeCrewButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.9;
+}

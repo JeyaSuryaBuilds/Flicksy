@@ -49,7 +49,6 @@ interface DrawStroke {
 }
 
 type EditorMode = "none" | "text" | "draw";
-type ShareTarget = "own" | "partner";
 
 const FILTERS = [
   {
@@ -153,9 +152,6 @@ export function MomentCompose() {
 
   const [caption, setCaption] = useState("");
   const [closeCrewOnly, setCloseCrewOnly] = useState(false);
-  const [shareTarget, setShareTarget] =
-    useState<ShareTarget>("own");
-
   const [selectedSound, setSelectedSound] =
     useState<Sound | null>(null);
 
@@ -871,7 +867,6 @@ export function MomentCompose() {
           filter,
           effect,
           caption,
-          shareTarget,
         });
 
       await createMoment({
@@ -929,7 +924,6 @@ export function MomentCompose() {
     setSelectedSound(null);
 
     setCloseCrewOnly(false);
-    setShareTarget("own");
 
     setEditingText(null);
     setDraggingOverlay(null);
@@ -1503,25 +1497,27 @@ export function MomentCompose() {
         )}
 
         {/* Sound */}
-        {selectedSound ? (
-          <SelectedSoundChip
-            sound={selectedSound}
-            onRemove={() =>
-              setSelectedSound(null)
-            }
-          />
-        ) : (
-          <button
-            type="button"
-            className={styles.soundButton}
-            onClick={() =>
-              setIsSoundPickerOpen(true)
-            }
-          >
-            <PlayIcon size={12} />
-            <span>Add a sound</span>
-          </button>
-        )}
+        <div className={styles.soundOverlay}>
+          {selectedSound ? (
+            <SelectedSoundChip
+              sound={selectedSound}
+              onRemove={() =>
+                setSelectedSound(null)
+              }
+            />
+          ) : (
+            <button
+              type="button"
+              className={styles.soundButton}
+              onClick={() =>
+                setIsSoundPickerOpen(true)
+              }
+            >
+              <PlayIcon size={12} />
+              <span>Add a sound</span>
+            </button>
+          )}
+        </div>
 
         {/* Caption */}
         <MentionInput
@@ -1533,59 +1529,32 @@ export function MomentCompose() {
           rows={2}
         />
 
-        {/* Destination */}
-        <div
-          className={
-            styles.destinationRow
-          }
-        >
+        {/* Destination / Privacy */}
+        <div className={styles.destinationRow}>
           <button
             type="button"
-            className={
-              shareTarget === "own"
-                ? styles.toolActive
-                : styles.tool
-            }
-            onClick={() =>
-              setShareTarget("own")
-            }
+            className={styles.destinationPrimary}
           >
-            Your Moment
+            <span className={styles.destinationIcon}>✦</span>
+            <span>
+              <strong>Your Moment</strong>
+              <small>Share with your followers</small>
+            </span>
           </button>
 
           <button
             type="button"
-            className={
-              shareTarget === "partner"
-                ? styles.toolActive
-                : styles.tool
-            }
-            onClick={() =>
-              setShareTarget("partner")
-            }
+            className={styles.closeCrewButton}
+            disabled
+            aria-label="Close Crew is coming in version 2"
           >
-            Partner Moment
+            <span className={styles.destinationIcon}>◉</span>
+            <span>
+              <strong>Close Crew</strong>
+              <small>Coming in V2</small>
+            </span>
           </button>
         </div>
-
-        {/* Privacy */}
-        <label
-          className={styles.privacyRow}
-        >
-          <input
-            type="checkbox"
-            checked={closeCrewOnly}
-            onChange={(event) =>
-              setCloseCrewOnly(
-                event.target.checked
-              )
-            }
-          />
-
-          <span>
-            Close Crew only
-          </span>
-        </label>
 
         {/* Actions */}
         <div className={styles.actions}>
